@@ -1,9 +1,11 @@
 <template>
   <div class="backend-layout">
-    <el-container>
+    <el-container class="main-container">
       <SideBar />
       <el-container>
-        <NavBar />
+        <el-header>
+          <NavBar />
+        </el-header>
         <el-main>
           <router-view />
         </el-main>
