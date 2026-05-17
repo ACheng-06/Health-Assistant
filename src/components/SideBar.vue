@@ -1,9 +1,9 @@
 <template>
-  <el-aside :width="isCollapser ? '64px' : '264px'">
-    <el-menu default-active="2" class="menu-style">
+  <el-aside :width="isCollapse ? '64px' : '264px'">
+    <el-menu default-active="2" class="menu-style" :collapse="isCollapse" :collapse-transition="false">
       <div class="brand">
         <el-image style="width:50px; height:50px; margin-right:10px;" :src="iconURL" alt="brand-icon" />
-        <div class="info-card">
+        <div v-if="!isCollapse" class="info-card">
           <h1 class="brand-title">心理健康AI助手</h1>
           <p class="brand-subtitle">管理后台</p>
         </div>
@@ -23,13 +23,15 @@
 </template>
 <script setup>
   import { useRouter } from 'vue-router'
+  import { useAdminStore } from '@/store/admin'
+  import { computed } from 'vue'
   const router = useRouter()
   const iconURL = new URL('@/assets/images/机器人.png', import.meta.url).href
   const selectMenu = (key) => {
     const currentRoute = router.options.routes[0]
     router.push(`${currentRoute.path}/${key.index}`)
   }
-
+  const isCollapse = computed(() => useAdminStore().isCollapse)
 </script>
 <style lang="scss" scoped>
 .menu-style {

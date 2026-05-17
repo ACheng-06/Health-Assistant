@@ -1,7 +1,7 @@
 <template>
   <div class="navbar">
     <div class="flex-box">
-      <el-button>
+      <el-button @click="handleCollapse">
         <el-icon>
           <Expand />
         </el-icon>
@@ -11,7 +11,7 @@
     <div class="flex-box">
       <el-dropdown @command="handleCommand">
         <div class="flex-box">
-          <el-avatar :src="userImg" alt="logo" />
+          <el-avatar style="margin-right: 10px;" :src="userImg" alt="logo" />
           <p class="user-name">ACheng</p>
           <el-icon>
             <ArrowDown />
@@ -28,11 +28,18 @@
 </template>
 
 <script setup>
-  import { useRouter, useRoute } from 'vue-router'
+  import { useRoute } from 'vue-router'
   import userImg from '@/assets/images/user.jpg'
-
+  import { useAdminStore } from '@/store/admin'
+  const handleCommand = (command) => {
+    if (command === 'logout') {
+      // 退出登录逻辑
+    }
+  }
+  const handleCollapse = () => {
+    useAdminStore().toggleCollapse()
+  }
   const route = useRoute()
-  const router = useRouter()
 </script>
 
 <style lang="scss" scoped>
