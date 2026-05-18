@@ -54,7 +54,6 @@
   const emit = defineEmits(['search'])
 
   const handleSearch = () => {
-    console.log(formData)
     emit('search', formData)
   }
   const handleReset = (formEl) => {

@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import BackendLayout from '@/components/BackendLayout.vue'
+import AuthLayout from '@/components/AuthLayout.vue'
 const backendroutes = [
   {
     path: '/back',
@@ -42,6 +43,26 @@ const backendroutes = [
       }
     ],
   },
+  {
+    path:'/auth',
+    component:AuthLayout,
+    children:[
+      {
+        path:'login',
+        component:()=>import('@/views/login.vue'),
+        meta:{
+          title:'登入页'
+        }
+      },
+      {
+        path:'register',
+        component:()=>import('@/views/register.vue'),
+        meta:{
+          title:'注册页'
+        }
+      }
+    ]
+  }
 ]
 
 const router = createRouter({
