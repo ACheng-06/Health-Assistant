@@ -44,7 +44,7 @@
     if (!formEl) return
     const valid = await formEl.validate()
     if (!valid) return
-    const { data: { data } } = await getLoginAPI(formData)
+    const data = await getLoginAPI(formData)
     console.log(data);
     if (!data.token) return
     localStorage.setItem('token', data.token)

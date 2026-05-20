@@ -30,7 +30,7 @@ service.interceptors.response.use(
     // 对响应数据做点什么
     const {data,config}=response
     // 例如：判断响应状态码是否为 200
-    if(data.code===200){
+    if(data.code==="200"){
       return data.data
     }else{
       if(data.code==='-1'){

@@ -1,5 +1,5 @@
 <template>
-  <el-form ref="ruleFormRef" :model="formData" :rules="rules">
+  <el-form ref="ruleFormRef" :model="formData">
     <el-row :gutter="24">
       <template v-for="item in formItemAttrs" :key="item.prop">
         <el-col v-bind="item.col">
