@@ -21,13 +21,52 @@
       <el-table-column prop="startedAt" label="创建时间" width="200" />
       <el-table-column label="操作" width="100" :align="`center`">
         <template #default="scope">
-          <el-button type="primary" text>详情</el-button>
+          <el-button type="primary" text @click="viewSessionDetail(scope.row)">详情</el-button>
         </template>
       </el-table-column>
     </el-table>
     <el-pagination style="margin-top: 25px;" :current-page="pagination.currentPage" :page-size="pagination.size"
       layout="prev, pager, next" :total="pagination.total" @current-change="handleChange" />
+
+    <!-- 会话详情弹窗 -->
+    <el-dialog title="咨询会话详情" width="70%" v-model="showDetailDialog">
+      <div class="session-detail">
+        <div class="detail-header">
+          <div class="detail-row">
+            <div class="detail-label">用户：</div>
+            <div class="detail-value">{{ sessionDetail.userNickname }}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">开始时间：</div>
+            <div class="detail-value">{{ sessionDetail.startedAt }}</div>
+          </div>
+          <div class="detail-row">
+            <div class="detail-label">消息数:</div>
+            <div class="detail-value">{{ sessionDetail.messageCount }}</div>
+          </div>
+        </div>
+
+        <div class="messages-container">
+          <div class="messages-header">
+            <h4>对话记录</h4>
+          </div>
+          <div class="messages-list" v-loading="loadingMessages">
+            <div v-for="message in sessionMessages" :key="message.id" class="message-item"
+              :class="message.senderType === 1 ? 'user-message' : 'ai-message'">
+              <div class="message-header">
+                <span class="sender">{{ message.senderType === 1 ? '用户' : 'AI助手' }}</span>
+                <span class="time">{{ message.createdAt }}</span>
+              </div>
+              <div class="message-content">{{ message.content }}</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </el-dialog>
   </div>
+
+
 </template>
 <script setup>
   import PageHead from '@/components/PageHead.vue'
