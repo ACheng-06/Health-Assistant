@@ -56,7 +56,7 @@
   </el-dialog>
 </template>
 <script setup>
-  import { ref, reactive, computed } from 'vue'
+  import { ref, reactive, computed, watch, nextTick } from 'vue'
   import { ElMessage } from 'element-plus'
   import { uploadFileAPI, createArticleAPI, updateArticleAPI } from '@/api/admin'
   import { fileBaseUrl } from '@/config/index.js'
@@ -70,7 +70,11 @@
     modelValue: {
       type: Boolean,
       default: false
-    }
+    },
+    article: {
+      type: Object,
+      default: null
+    },
   })
 
   const rules = reactive({
@@ -100,6 +104,36 @@
   const commonTags = ['情绪管理', '焦虑', '抑郁', '压力', '睡眠', '冥想', '心理健康', '自我成长']
 
   const emit = defineEmits(['update:modelValue', 'success'])
+
+  //一个 ! 是取反，两个 !! 就是取反再取反，回到原来的真假，但类型变成了布尔值。
+  const isEdit = computed(() => !!props.article?.id)
+
+  // 【核心修复】：监听弹窗打开，处理数据回显和表单重置
+  watch(() => props.modelValue, (isOpen) => {
+    if (isOpen) {
+      if (isEdit.value && props.article) {
+        // 1. 编辑模式：回显数据
+        Object.assign(formData, props.article)
+        // 处理标签：字符串转数组
+        formData.tagArray = props.article.tags ? props.article.tags.split(',') : []
+        // 处理封面回显
+        imgUrl.value = formData.coverImage ?
+          (formData.coverImage.startsWith('http') ? formData.coverImage : `${fileBaseUrl}${formData.coverImage}`) : ""
+      } else {
+        // 2. 新增模式：清空上一次的残留数据
+        Object.assign(formData, {
+          title: "", content: "", coverImage: "", categoryId: "", summary: "", tagArray: [], id: ""
+        })
+        imgUrl.value = ""
+        // 清除校验红字提示
+        nextTick(() => {
+          formRef.value?.clearValidate()
+        })
+      }
+    }
+  })
+
+
 
   const dialogVisible = computed({
     get: () => props.modelValue,
@@ -161,17 +195,14 @@
     } catch {
       return
     }
-
     const submitData = {
       ...formData,
       tags: formData.tagArray.join(','),
     }
     delete submitData.tagArray
-
     loading.value = true
-
     try {
-      const api = isEdit.value ? updateArticle : createArticle
+      const api = isEdit.value ? updateArticleAPI : createArticleAPI
       await api(submitData)
       ElMessage.success(isEdit.value ? '更新成功' : '创建成功')
       emit('success')

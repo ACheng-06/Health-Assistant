@@ -35,7 +35,6 @@
             type="success">发布</el-button>
           <el-button @click="handleUnpublish(scope.row)" v-if="scope.row.status === 1" text
             type="warning">下线</el-button>
-
           <el-button @click="handleDelete(scope.row)" text type="danger">删除</el-button>
         </template>
       </el-table-column>
@@ -43,15 +42,17 @@
 
     <el-pagination style="margin-top: 25px;" :current-page="pagination.currentPage" :page-size="pagination.size"
       layout="prev, pager, next" :total="pagination.total" @current-change="handleChange" />
-    <ArticleDialog v-model="dialogVisible" :categories="categories" @success="handleSuccess" />
+    <ArticleDialog v-model="dialogVisible" :categories="categories" :article="currentArticle"
+      @success="handleSuccess" />
   </div>
 </template>
 <script setup>
   import { ref, onMounted, reactive } from 'vue'
-  import { getCategoryAPI, getArticlePageAPI } from '@/api/admin'
+  import { getCategoryAPI, getArticlePageAPI, getArticleDetailAPI, changeArticleStatusAPI, deleteArticleAPI } from '@/api/admin'
   import PageHead from '@/components/PageHead.vue'
   import TableSearch from '@/components/TableSearch.vue'
   import ArticleDialog from '@/components/ArticleDialog.vue'
+  import { ElMessage, ElMessageBox } from 'element-plus'
 
   const formItem = ref([
     {
@@ -80,6 +81,9 @@
   const categoryMap = ref({})
   const categories = ref([])
   const dialogVisible = ref(false)
+  const currentArticle = ref(null)
+
+
 
   const pagination = reactive({
     total: 0,
@@ -88,7 +92,92 @@
   })
 
   const handleAdd = () => {
+    currentArticle.value = null
     dialogVisible.value = true
+  }
+
+  const handleEdit = async (article) => {
+    const res = await getArticleDetailAPI(article.id)
+    currentArticle.value = res
+    dialogVisible.value = true
+  }
+
+  const handlePublish = async (row) => {
+    try {
+      await ElMessageBox.confirm(
+        `确定要发布该文章${row.title}吗？`,   // 弹窗正文，显示文章标题
+        '提示',                                // 弹窗标题栏显示"提示"
+        {
+          confirmButtonText: '确定发布',      // 确定按钮的文字
+          cancelButtonText: '取消',           // 取消按钮的文字
+          type: 'info'                        // 弹窗图标类型
+        }
+      )
+      await changeArticleStatusAPI(row.id, { status: 1 })
+      ElMessage.success('发布成功')
+      handleSearch({})
+    } catch {
+      // 用户点了取消，什么都不做
+    }
+  }
+
+  const handleUnpublish = async (row) => {
+    try {
+      await ElMessageBox.confirm(
+        `确定要下线该文章${row.title}吗？`,   // 弹窗正文，显示文章标题
+        '提示',                                // 弹窗标题栏显示"提示"
+        {
+          confirmButtonText: '确定下线',      // 确定按钮的文字
+          cancelButtonText: '取消',           // 取消按钮的文字
+          type: 'info'                        // 弹窗图标类型
+        }
+      )
+      await changeArticleStatusAPI(row.id, { status: 2 })
+      ElMessage.success('下线成功')
+      handleSearch({})
+    } catch {
+      // 用户点了取消，什么都不做
+    }
+  }
+
+
+  const handleDelete = async (row) => {
+    try {
+      await ElMessageBox.confirm(
+        `确定要删除文章"${row.title}"吗？`,
+        '提示',
+        { confirmButtonText: '确定', cancelButtonText: '取消', type: 'info' }
+      )
+      await deleteArticleAPI(row.id)
+      ElMessage.success('删除成功')
+      handleSearch({})
+    } catch {
+      // 用户点了取消，什么都不做   
+    }
+  }
+
+  const handleSearch = async (formData) => {
+    const params = {
+      ...pagination,
+      ...formData
+    }
+    try {
+      const res = await getArticlePageAPI(params)
+      tableData.value = res.records || []
+      pagination.total = res.total || 0
+    } catch (error) {
+      console.error('获取列表失败:', error)
+    }
+  }
+
+  const handleChange = (page) => {
+    pagination.currentPage = page
+    handleSearch({})
+  }
+
+  const handleSuccess = () => {
+    pagination.currentPage = 1
+    handleSearch({})
   }
 
   onMounted(async () => {
@@ -104,29 +193,5 @@
     }, {})
     handleSearch({})
   })
-
-  const handleSearch = async (formData) => {
-    const params = {
-      ...pagination,
-      ...formData
-    }
-    try {
-      const data = await getArticlePageAPI(params)
-      tableData.value = data.records || []
-      pagination.total = data.total || 0
-    } catch (error) {
-      console.error('获取列表失败:', error)
-    }
-  }
-
-  const handleChange = (page) => {
-    pagination.currentPage = page
-    handleSearch({})
-  }
-
-  const handleSuccess = () => {
-    pagination.currentPage = 1
-    handleSearch({})
-  }
 
 </script>
