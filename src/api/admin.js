@@ -62,4 +62,7 @@ export function deleteEmotionalAPI(id){
   return service.delete(`/emotion-diary/admin/${id}`)
 }
 
+export function getAnalyticsOverviewAPI(){
+  return service.get('/data-analytics/overview')
+} 
 
