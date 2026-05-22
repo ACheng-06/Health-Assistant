@@ -52,4 +52,14 @@ export function getSessionDetailAPI(sessionId){
   return service.get(`/psychological-chat/sessions/${sessionId}/messages`)
 }
 
+export function getEmotionalPageAPI(params){
+  return service.get('/emotion-diary/admin/page',{
+    params
+  })
+}
+
+export function deleteEmotionalAPI(id){ 
+  return service.delete(`/emotion-diary/admin/${id}`)
+}
+
 
