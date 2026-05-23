@@ -139,8 +139,7 @@
 
     emotionChart = echarts.init(emotionChartRef.value)
 
-    // 【核心修复 1】：把取数据的字段名改回你最初的 emotionChart，并加了 fallback 兼容
-    const TrendData = aiData.value.emotionChart || aiData.value.emotionTrend || []
+    const TrendData = aiData.value?.emotionTrend || []
 
     const option = {
       title: {
@@ -178,7 +177,7 @@
         itemStyle: { color: '#faebaf' }
       }, {
         name: '记录数量', type: 'line', smooth: true,
-        yAxisIndex: 1, // 【核心修复 2】：这里必须加上 1，告诉 Echarts 绑定到右边的 Y 轴
+        yAxisIndex: 1,
         data: TrendData.map(item => item.recordCount),
         lineStyle: { width: 3, color: '#eeb5a3' },
         itemStyle: { color: '#eeb5a3' }
@@ -189,24 +188,22 @@
   }
 
   // ---------------- 2. 咨询会话统计图表 ----------------
-  // 【修复核心1】：之前这里重复声明了 emotionChart，现改为 consultationChart
   let consultationChart = null
   const consultationChartRef = ref(null)
 
   const initConsultationChart = () => {
     if (!consultationChartRef.value) return
     if (consultationChart) {
-      consultationChart.dispose() // 【修复核心2】：加上了小括号 ()
+      consultationChart.dispose()
     }
 
     consultationChart = echarts.init(consultationChartRef.value)
 
-    // 【修复核心3】：从响应式对象中取值要带 .value，并且加上安全问号防报错
-    const dailyTrend = aiData.value.consultationStats?.dailyTrend || []
+    const dailyTrend = aiData.value?.consultationStats?.dailyTrend || []
 
     const option = {
       title: {
-        text: '咨询活动统计',
+        text: '咨询会话统计',
         textStyle: { fontSize: 16, fontWeight: 600, color: '#2d3436' },
         left: 'center', top: 10
       },
@@ -259,18 +256,15 @@
     consultationChart.setOption(option)
   }
   // ---------------- 3. 用户活跃度趋势 ----------------
-  let userActivityChart = null  // ✅ 这个用来存图表实例
-  const userActivityChartRef = ref(null) // ✅ 这个用来绑定 HTML 里的 <div ref="userActivityChartRef">
+  let userActivityChart = null
+  const userActivityChartRef = ref(null)
   const initUserActivityChart = () => {
-    // ✅ 修改后：
+    if (!userActivityChartRef.value) return
     if (userActivityChart) {
       userActivityChart.dispose()
     }
-    // 创建echarts实例，赋值给 userActivityChart
     userActivityChart = echarts.init(userActivityChartRef.value)
-    //获取数据
-    // ✅ 修改后：
-    const activityData = aiData.value.userActivity || []
+    const activityData = aiData.value?.userActivity || []
     const option = {
       title: {
         text: '用户活跃度趋势',
@@ -408,7 +402,7 @@
     try {
       const res = await getAnalyticsOverviewAPI()
       aiData.value = (res.data && res.data.data) || res.data || res || {}
-
+      console.log(aiData.value)
       nextTick(() => {
         initEmotional()
         initConsultationChart()

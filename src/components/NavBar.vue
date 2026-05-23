@@ -28,12 +28,16 @@
 </template>
 
 <script setup>
-  import { useRoute } from 'vue-router'
+  import { useRoute, useRouter } from 'vue-router'
   import userImg from '@/assets/images/user.jpg'
   import { useAdminStore } from '@/store/admin'
+  const router = useRouter()
   const handleCommand = (command) => {
     if (command === 'logout') {
       // 退出登录逻辑
+      localStorage.removeItem('token')
+      localStorage.removeItem('username')
+      router.push('/auth/login')
     }
   }
   const handleCollapse = () => {

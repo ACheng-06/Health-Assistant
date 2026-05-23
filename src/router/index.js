@@ -70,4 +70,17 @@ const router = createRouter({
   routes:backendroutes
 })
 
+router.beforeEach((to, from, next) => {
+  if (to.path === '/auth/login' || to.path === '/auth/register') {
+    next()
+  } else {
+    const token = localStorage.getItem('token')
+    if (token) {
+      next()
+    } else {
+      next('/auth/login')
+    }
+  }
+})
+
 export default router
