@@ -5,7 +5,9 @@
         <el-icon>
           <Back />
         </el-icon>
-        <span>返回首页</span>
+        <router-link to="/" class="back-home">
+          <span>返回首页</span>
+        </router-link>
       </div>
       <div class="title-text">
         <h2>登录您的账户</h2>
@@ -44,14 +46,21 @@
     if (!formEl) return
     const valid = await formEl.validate()
     if (!valid) return
-    const data = await getLoginAPI(formData)
-    console.log(data);
-    if (!data.token) return
-    localStorage.setItem('token', data.token)
-    localStorage.setItem('username', JSON.stringify(formData.username))
+    const actualData = await getLoginAPI(formData)
 
-    if (data.userInfo.userType === 2) {
+    const token = actualData.token;
+    const userInfo = actualData.userInfo;
+    const roleType = actualData.roleType;
+
+    if (!token) return
+    localStorage.setItem('token', token)
+    if (userInfo) {
+      localStorage.setItem('username', JSON.stringify(userInfo))
+    }
+    if (roleType === 2) {
       router.push('/back/dashboard')
+    } else {
+      router.push('/')
     }
   }
 </script>
@@ -88,6 +97,19 @@
     .footer {
       text-align: center;
       margin-top: 40px;
+    }
+  }
+}
+
+.back-home,
+.footer {
+  a {
+    color: #333;
+    text-decoration: none;
+
+    &:hover {
+      text-decoration: underline;
+      color: #409eff;
     }
   }
 }

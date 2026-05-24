@@ -1,6 +1,8 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import BackendLayout from '@/components/BackendLayout.vue'
 import AuthLayout from '@/components/AuthLayout.vue'
+import FrontendLayout from '@/components/FrontendLayout.vue'
+
 const backendroutes = [
   {
     path: '/back',
@@ -65,13 +67,27 @@ const backendroutes = [
   }
 ]
 
+const frontendroutes = [
+  {
+    path:'/',
+    component: FrontendLayout,
+    children:[
+      {
+        path:'',
+        component:()=>import('@/views/home.vue'),
+      }
+    ]
+  }       
+]
+
+
 const router = createRouter({
   history: createWebHistory(),
-  routes:backendroutes
+  routes: [...backendroutes, ...frontendroutes]
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.path === '/auth/login' || to.path === '/auth/register') {
+  if (to.path === '/auth/login' || to.path === '/auth/register' || to.path === '/') {
     next()
   } else {
     const token = localStorage.getItem('token')

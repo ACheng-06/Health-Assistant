@@ -16,7 +16,7 @@
 </template>
 
 <script setup>
-  const inconUrl = new URL('@/assets/images/robot-fill.png', import.meta.url)
+  const inconUrl = new URL('@/assets/images/robot-fill.png', import.meta.url).href
 </script>
 
 

@@ -36,7 +36,7 @@
     if (command === 'logout') {
       // 退出登录逻辑
       localStorage.removeItem('token')
-      localStorage.removeItem('username')
+      localStorage.removeItem('userInfo')
       router.push('/auth/login')
     }
   }
