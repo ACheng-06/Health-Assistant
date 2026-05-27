@@ -113,15 +113,16 @@
     await formEl.validate()
     formData.email = formData.email + emailSuffix.value
     const res = await getRegisterAPI(formData)
-    if (res.data.code === 'BUSINESS_ERROR') {
+
+    if (res?.data?.code === 'BUSINESS_ERROR') {
       ElMessage.error(res.data.message)
       formEl.resetFields()
       return
     }
-    if (res) {
-      ElMessage.success('注册成功')
-      router.push('/auth/login')
-    }
+
+    ElMessage.success('注册成功')
+    router.push('/auth/login')
+
   }
 </script>
 <style scoped lang="scss">

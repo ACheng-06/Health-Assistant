@@ -58,7 +58,8 @@
     if (userInfo) {
       localStorage.setItem('userInfo', JSON.stringify(userInfo))
     }
-    if (roleType === 2) {
+
+    if (roleType == 2) {
       router.push('/back/dashboard')
     } else {
       router.push('/')
