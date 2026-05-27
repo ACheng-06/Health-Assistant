@@ -71,12 +71,29 @@ const frontendroutes = [
   {
     path:'/',
     component: FrontendLayout,
-    children:[
-      {
-        path:'',
-        component:()=>import('@/views/home.vue'),
-      }
-    ]
+    children: [
+            {
+                path: '',
+                component: () => import('@/views/home.vue')
+            },
+            {
+                path: 'consultation',
+                component: () => import('@/views/consultation.vue')
+            },
+            {
+                path: 'emotion-diary',
+                component: () => import('@/views/emotionDiary.vue')
+            },
+            {
+                path: 'frontendKnowledge',
+                component: () => import('@/views/frontendKnowledge.vue')
+            },
+            {
+                path: 'knowledge/article/:id',
+                component: () => import('@/views/articleDetail.vue'),
+                props: true
+            }
+        ]
   }       
 ]
 
@@ -87,16 +104,26 @@ const router = createRouter({
 })
 
 router.beforeEach((to, from, next) => {
-  if (to.path === '/auth/login' || to.path === '/auth/register' || to.path === '/') {
-    next()
-  } else {
-    const token = localStorage.getItem('token')
+  const token = localStorage.getItem('token')
     if (token) {
-      next()
+        try {
+            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
+            if (to.path.startsWith('/auth')) {
+                next(userInfo.userType == 2 ? '/back/dashboard' : '/')
+                return
+            }
+            if (userInfo.userType == 2) {
+                next()
+            } else {
+                to.path.startsWith('/back') ? next('/') : next()
+            }
+        } catch (error) {
+            localStorage.clear()
+            next('/auth/login')
+        }
     } else {
-      next('/auth/login')
+        to.path.startsWith('/back') ? next('/auth/login') : next()
     }
-  }
 })
 
 export default router

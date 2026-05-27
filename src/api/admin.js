@@ -66,3 +66,7 @@ export function getAnalyticsOverviewAPI(){
   return service.get('/data-analytics/overview')
 } 
 
+export function getLogoutAPI(){
+  return service.post('/user/logout') 
+}
+

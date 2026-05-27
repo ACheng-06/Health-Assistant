@@ -29,12 +29,14 @@
 
 <script setup>
   import { useRoute, useRouter } from 'vue-router'
+  import { getLogoutAPI } from '@/api/admin'
   import userImg from '@/assets/images/user.jpg'
   import { useAdminStore } from '@/store/admin'
   const router = useRouter()
-  const handleCommand = (command) => {
+  const handleCommand = async (command) => {
     if (command === 'logout') {
       // 退出登录逻辑
+      await getLogoutAPI()
       localStorage.removeItem('token')
       localStorage.removeItem('userInfo')
       router.push('/auth/login')

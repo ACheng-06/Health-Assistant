@@ -35,6 +35,7 @@
   import { ref, reactive } from 'vue'
   import router from '@/router'
   import { getLoginAPI } from '@/api/admin'
+
   const ruleFormRef = ref()
   const formData = reactive({ username: '', password: '' })
   const rules = reactive({
@@ -46,16 +47,16 @@
     if (!formEl) return
     const valid = await formEl.validate()
     if (!valid) return
-    const actualData = await getLoginAPI(formData)
 
-    const token = actualData.token;
-    const userInfo = actualData.userInfo;
-    const roleType = actualData.roleType;
+    const actualData = await getLoginAPI(formData)
+    const token = actualData.token
+    const userInfo = actualData.userInfo
+    const roleType = actualData.roleType
 
     if (!token) return
     localStorage.setItem('token', token)
     if (userInfo) {
-      localStorage.setItem('username', JSON.stringify(userInfo))
+      localStorage.setItem('userInfo', JSON.stringify(userInfo))
     }
     if (roleType === 2) {
       router.push('/back/dashboard')
@@ -63,6 +64,7 @@
       router.push('/')
     }
   }
+
 </script>
 <style scoped lang="scss">
 .container {

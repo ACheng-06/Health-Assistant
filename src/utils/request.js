@@ -27,29 +27,34 @@ service.interceptors.request.use(
 //响应拦截器
 service.interceptors.response.use(
   response => {
-    // 对响应数据做点什么
-    const {data,config}=response
-    // 例如：判断响应状态码是否为 200
-    if(data.code==="200"){
-      return data.data
-    }else{
-      if(data.code==='-1'){
-        if(!config.url?.includes('token')){ 
-          ElMessage.error(data.msg || '登录过期，请重新登录')
-          localStorage.removeItem('token')
-          localStorage.removeItem('userInfo')
-          router.push('/auth/login')
-         }else{
-          return Promise.reject('网络请求失败...')
-         }
-      }
-    }
-    return response
-  },
-  error => {
-    // 对响应错误做点什么
-    return Promise.reject(error)
-  }
+        const { data, config } = response
+        // 1. 处理业务成功状态码 (兼容数字和字符串)
+        if (data.code === 200 || data.code === '200') {
+            return data.data // 直接返回核心数据，简化前端处理
+        } else {
+            // 2. 处理登录过期
+            // 只有 code 为 401，或者 code 为 -1 且包含“登录”字样时才判定为过期
+            const isTokenExpired = data.code === 401 || data.code === '401' || (data.code === '-1' && data.msg?.includes('登录'))
+
+            if (isTokenExpired) {
+                if (!config.url?.includes('/login')) {
+                    ElMessage.error(data.msg || '登录过期，请重新登录')
+                    localStorage.removeItem('token')
+                    localStorage.removeItem('user')
+                    window.location.href = '/auth/login' // 使用绝对路径
+                }
+                return Promise.reject('Token Expired')
+            } else {
+                // 3. 普通业务错误只弹窗，不踢人
+                ElMessage.error(data.msg || '系统错误')
+                return Promise.reject(data.msg || 'error')
+            }
+        }
+    },
+    (error) => {
+        ElMessage.error('网络请求失败')
+        return Promise.reject(error)
+    }    
 )
 
 export default service

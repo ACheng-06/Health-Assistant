@@ -32,6 +32,7 @@
 <script setup>
   import { ref, onMounted } from 'vue'
   import { useRouter } from 'vue-router'
+  import { getLogoutAPI } from '@/api/admin'
 
   const iconUrl = new URL('@/assets/images/机器人.png', import.meta.url).href
 
@@ -42,7 +43,8 @@
     isLoggedIn.value = localStorage.getItem('token') !== null
   })
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    await getLogoutAPI()
     localStorage.removeItem('token')
     localStorage.removeItem('userInfo')
     isLoggedIn.value = false
