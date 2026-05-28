@@ -128,8 +128,8 @@
   import { ref, reactive, onMounted } from 'vue'
   import { getEmotionalPageAPI, deleteEmotionalAPI } from '@/api/admin'
   import { ElMessage, ElMessageBox } from 'element-plus'
-  import pageHead from '@/components/pageHead.vue'
-  import TableSearch from '@/components/TableSearch.vue'
+  import pageHead from '@/views/backend/PageHead.vue'
+  import TableSearch from '@/views/backend/TableSearch.vue'
 
   //映射
   const getEmotionTagType = (emotion) => {

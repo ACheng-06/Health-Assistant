@@ -69,7 +69,7 @@
 
 </template>
 <script setup>
-  import PageHead from '@/components/PageHead.vue'
+  import PageHead from '@/views/backend/PageHead.vue'
   import { getConsultationPageAPI, getSessionDetailAPI } from '@/api/admin'
   import { ref, onMounted, reactive } from 'vue'
 

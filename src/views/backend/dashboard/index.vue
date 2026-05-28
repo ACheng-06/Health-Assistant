@@ -402,7 +402,6 @@
     try {
       const res = await getAnalyticsOverviewAPI()
       aiData.value = (res.data && res.data.data) || res.data || res || {}
-      console.log(aiData.value)
       nextTick(() => {
         initEmotional()
         initConsultationChart()

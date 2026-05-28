@@ -49,9 +49,9 @@
 <script setup>
   import { ref, onMounted, reactive } from 'vue'
   import { getCategoryAPI, getArticlePageAPI, getArticleDetailAPI, changeArticleStatusAPI, deleteArticleAPI } from '@/api/admin'
-  import PageHead from '@/components/PageHead.vue'
-  import TableSearch from '@/components/TableSearch.vue'
-  import ArticleDialog from '@/components/ArticleDialog.vue'
+  import PageHead from '@/views/backend/PageHead.vue'
+  import TableSearch from '@/views/backend/TableSearch.vue'
+  import ArticleDialog from '@/views/backend/knowledge/ArticleDialog.vue'
   import { ElMessage, ElMessageBox } from 'element-plus'
 
   const formItem = ref([
