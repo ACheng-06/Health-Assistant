@@ -152,7 +152,7 @@
     background: linear-gradient(135deg, #a4b6ef 0%, #8192f2 100%);
     color: white;
     padding: 48px;
-    border-radius: 12px;
+    border-radius: 20px;
 
     .header-content {
       display: flex;
@@ -195,6 +195,14 @@
           border-left: 4px solid #9aa7da;
           padding-left: 10px;
           cursor: pointer;
+          border-radius: 0 8px 8px 0;
+          transition: all 0.3s ease;
+
+          &:hover {
+            background: #f0f4ff;
+            border-left-color: #5c6bc0;
+            transform: translateX(3px);
+          }
 
           .read-count {
             margin-top: 15px;
@@ -218,6 +226,13 @@
         padding: 15px;
         margin-bottom: 20px;
         display: flex;
+        cursor: pointer;
+        transition: all 0.3s ease;
+
+        &:hover {
+          transform: translateY(-3px);
+          box-shadow: 0 12px 32px rgba(185, 184, 184, 0.7);
+        }
 
         &:last-child {
           margin-bottom: 0;

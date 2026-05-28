@@ -149,8 +149,7 @@
           :class="msg.senderType === 1 ? 'user-message' : 'ai-message'">
           <div class="message-avatar">
             <el-image v-if="msg.senderType === 1" :src="iconUrl2" style="width: 32px; height: 32px" alt="用户" />
-            <el-image v-if="msg.senderType === 2" :src="iconUrl1" style="width: 32px; height: 32px"
-              alt="AI助手" />
+            <el-image v-if="msg.senderType === 2" :src="iconUrl1" style="width: 32px; height: 32px" alt="AI助手" />
           </div>
           <div class="message-content">
             <div class="message-bubble">
@@ -206,7 +205,7 @@
   import { startSessionAPI, getSessionListAPI, getSessionDetailAPI, getSessionEmotionAPI, deleteSessionAPI } from '@/api/frontend'
   // 静态图片资源
 
-  const iconUrl1 = new URL('@/assets/images/doubao_avatar.png', import.meta.url).href
+  const iconUrl1 = new URL('@/assets/images/logo.png', import.meta.url).href
   const iconUrl2 = new URL('@/assets/images/user.png', import.meta.url).href
 
   // 定义响应式变量
@@ -938,13 +937,12 @@
         .chat-avatar {
           width: 48px;
           height: 48px;
-          background: rgba(255, 255, 255, 0.25);
+          background: transparent;
           border-radius: 50%;
           display: flex;
           align-items: center;
           justify-content: center;
           margin-right: 16px;
-          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
           position: relative;
           z-index: 1;
         }
@@ -1000,8 +998,8 @@
 
         &.ai-message {
           .message-avatar {
-            background: linear-gradient(135deg, #9aadf5, #9aa7da);
-            box-shadow: 0 4px 12px rgba(251, 146, 60, 0.3);
+
+            box-shadow: 0 4px 12px rgba(171, 235, 242, 0.943);
           }
         }
 

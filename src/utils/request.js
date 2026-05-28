@@ -40,7 +40,7 @@ service.interceptors.response.use(
                 if (!config.url?.includes('/login')) {
                     ElMessage.error(data.msg || '登录过期，请重新登录')
                     localStorage.removeItem('token')
-                    localStorage.removeItem('user')
+                    localStorage.removeItem('userInfo')
                     window.location.href = '/auth/login' // 使用绝对路径
                 }
                 return Promise.reject('Token Expired')

@@ -2,6 +2,12 @@
   <div class="articleDetail-container">
     <div class="header-section">
       <div class="header-content">
+        <el-button class="back-btn" @click="router.back()">
+          <el-icon>
+            <ArrowLeft />
+          </el-icon>
+          返回
+        </el-button>
         <el-image :src="iconUrl" style="width: 60px; height: 60px"></el-image>
         <h1>知识文章详情</h1>
       </div>
@@ -75,14 +81,16 @@
 
 <script setup>
   import { ref, onMounted } from 'vue'
-  import { useRoute } from 'vue-router' // 修复 1：引入 useRoute
+  import { useRoute, useRouter } from 'vue-router' // 
   import { getKnowledgeDetailAPI } from '@/api/frontend'
   import { dayjs } from 'element-plus'
+
 
   const iconUrl = new URL('@/assets/images/book.png', import.meta.url).href
 
 
   const route = useRoute()
+  const router = useRouter()
   const articleId = route.params.id
 
   const articleDetail = ref({})
@@ -135,13 +143,26 @@
   }
 
   .header-section {
-    background: linear-gradient(135deg, #8192f2 0%, #5c6bc0 100%);
+    background: linear-gradient(135deg, #965bdf 0%, #5c6bc0 100%);
     color: white;
     padding: 48px;
+    border-radius: 20px;
 
     .header-content {
       display: flex;
       align-items: center;
+
+      .back-btn {
+        background: rgba(255, 255, 255, 0.2);
+        border: 1px solid rgba(255, 255, 255, 0.4);
+        color: white;
+        margin-right: 16px;
+
+        &:hover {
+          background: rgba(255, 255, 255, 0.35);
+        }
+      }
+
       gap: 12px;
     }
   }

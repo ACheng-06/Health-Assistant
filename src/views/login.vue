@@ -47,22 +47,25 @@
     if (!formEl) return
     const valid = await formEl.validate()
     if (!valid) return
+    try {
+      const actualData = await getLoginAPI(formData)
+      const token = actualData.token
+      const userInfo = actualData.userInfo
+      const roleType = actualData.roleType
+      if (!token) return
+      localStorage.setItem('token', token)
+      if (userInfo) {
+        localStorage.setItem('userInfo', JSON.stringify(userInfo))
+      }
 
-    const actualData = await getLoginAPI(formData)
-    const token = actualData.token
-    const userInfo = actualData.userInfo
-    const roleType = actualData.roleType
-
-    if (!token) return
-    localStorage.setItem('token', token)
-    if (userInfo) {
-      localStorage.setItem('userInfo', JSON.stringify(userInfo))
-    }
-
-    if (roleType == 2) {
-      router.push('/back/dashboard')
-    } else {
-      router.push('/')
+      if (roleType == 2) {
+        router.push('/back/dashboard')
+      } else {
+        router.push('/')
+      }
+    } catch (error) {
+      ElMessage.error(error.message || '登录失败')
+      return
     }
   }
 

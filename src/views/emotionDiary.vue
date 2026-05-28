@@ -139,6 +139,7 @@
   const resetForm = () => {
     formRef.value.resetFields()
     Object.assign(diaryForm, {
+      diaryDate: dayjs().format('YYYY-MM-DD'),
       moodScore: null,
       dominantEmotion: '',
       emotionTriggers: '',
