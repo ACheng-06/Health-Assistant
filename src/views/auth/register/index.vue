@@ -125,9 +125,10 @@
 
     loading.value = true
     try {
-      // 在副本上拼接邮箱后缀，避免重复提交时污染表单原值
+      // 确认密码只用于前端校验，不提交给后端；邮箱在副本上拼接后缀，避免污染表单原值
+      const { confirmPassword, ...payload } = formData
       await registerAPI({
-        ...formData,
+        ...payload,
         email: `${formData.email}${emailSuffix.value}`
       })
       ElMessage.success('注册成功')

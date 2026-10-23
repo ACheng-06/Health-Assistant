@@ -3,6 +3,7 @@ import { ElMessage } from 'element-plus/es/components/message/index.mjs'
 import router from '@/router'
 import { clearAuthStorage } from '@/utils/auth'
 import { apiBaseUrl } from '@/config'
+import { useAuthStore } from '@/store/auth'
 
 const service = axios.create({
   baseURL: apiBaseUrl,
@@ -28,8 +29,21 @@ service.interceptors.request.use(
 
 const isLoginRequest = (url = '') => url.includes('/login')
 
+// 并发请求同时返回登录过期时，只处理一次，避免重复弹窗与重复跳转
+let lastTokenExpiredAt = 0
+
 const handleTokenExpired = (msg) => {
+    const now = Date.now()
+    if (now - lastTokenExpiredAt < 1500) return
+    lastTokenExpiredAt = now
+
     clearAuthStorage()
+    // 同步 Pinia，否则导航栏等依赖 store 的地方仍显示已登录
+    try {
+        useAuthStore().syncFromStorage()
+    } catch (e) {
+        // pinia 尚未安装时（应用启动前的请求）忽略
+    }
     ElMessage.error(msg || '登录过期，请重新登录')
     router.push('/auth/login')
 }

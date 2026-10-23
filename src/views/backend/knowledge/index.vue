@@ -183,16 +183,21 @@
   }
 
   onMounted(async () => {
-    const data = await getCategoryTreeAPI()
-    categories.value = data.map(item => ({
-      label: item.categoryName,
-      value: item.id
-    }))
-    formItem.value[1].options = categories.value
-    categoryMap.value = formItem.value[1].options.reduce((map, item) => {
-      map[item.value] = item.label
-      return map
-    }, {})
+    try {
+      const data = await getCategoryTreeAPI()
+      categories.value = (data || []).map(item => ({
+        label: item.categoryName,
+        value: item.id
+      }))
+      formItem.value[1].options = categories.value
+      categoryMap.value = formItem.value[1].options.reduce((map, item) => {
+        map[item.value] = item.label
+        return map
+      }, {})
+    } catch (error) {
+      console.error('获取文章分类失败:', error)
+    }
+    // 分类请求失败也要把列表拉起来
     handleSearch({})
   })
 

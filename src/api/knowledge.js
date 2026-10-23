@@ -1,4 +1,5 @@
 import service from '@/utils/request'
+import { normalizePageParams } from '@/utils/pagination'
 
 export function getCategoryTreeAPI() {
   return service.get('/knowledge/category/tree')
@@ -6,7 +7,7 @@ export function getCategoryTreeAPI() {
 
 // 分页查询文章（前台知识库与后台文章管理共用）
 export function getArticlePageAPI(params) {
-  return service.get('/knowledge/article/page', { params })
+  return service.get('/knowledge/article/page', { params: normalizePageParams(params) })
 }
 
 export function getArticleDetailAPI(id) {

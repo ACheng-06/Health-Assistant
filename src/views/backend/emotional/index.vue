@@ -40,7 +40,7 @@
         </template>
       </el-table-column>
     </el-table>
-    <el-pagination style="margin-top: 25px;" :current-page="pagination.current" :page-size="pagination.size"
+    <el-pagination style="margin-top: 25px;" :current-page="pagination.currentPage" :page-size="pagination.size"
       layout="prev, pager, next" :total="pagination.total" @current-change="handleChange" />
 
     <el-dialog v-model="detailDialogVisble" title="情绪日志详情" width="880px" :close-on-click-modal="false">
@@ -209,7 +209,7 @@
   const pagination = reactive({
     total: 0,
     size: 10,
-    current: 1
+    currentPage: 1
   })
 
   const handleSearch = async (formData) => {
@@ -235,7 +235,7 @@
   }
 
   const handleChange = (page) => {
-    pagination.current = page
+    pagination.currentPage = page
     handleSearch({})
   }
 

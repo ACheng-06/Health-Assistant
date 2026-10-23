@@ -89,12 +89,15 @@
   const viewSessionDetail = async (row) => {
     showDetailDialog.value = true
     sessionDetail.value = row
+    // 先清空上一条会话的对话，避免请求失败时展示旧数据
+    sessionMessages.value = []
     loadingMessages.value = true
     try {
       const res = await getSessionMessagesAPI(row.id)
       sessionMessages.value = res || []
     } catch (err) {
       console.error('加载会话详情失败:', err)
+      sessionMessages.value = []
     } finally {
       loadingMessages.value = false
     }
@@ -102,20 +105,21 @@
 
   const handleChange = (val) => {
     pagination.currentPage = val
-    getList({})
+    getList()
   }
 
   const getList = async () => {
-    const params = {
-      ...pagination,
+    try {
+      const res = await getSessionPageAPI({ ...pagination })
+      tableData.value = res?.records || []
+      pagination.total = res?.total || 0
+    } catch (error) {
+      console.error('获取咨询记录失败:', error)
     }
-    const res = await getSessionPageAPI(params)
-    tableData.value = res.records || []
-    pagination.total = res.total || 0
   }
 
   onMounted(() => {
-    getList({})
+    getList()
   })
 
 

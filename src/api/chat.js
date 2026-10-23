@@ -1,4 +1,5 @@
 import service from '@/utils/request'
+import { normalizePageParams } from '@/utils/pagination'
 
 // 启动咨询会话
 export const startSessionAPI = (data) => {
@@ -7,7 +8,7 @@ export const startSessionAPI = (data) => {
 
 // 分页查询会话（前台会话列表与后台咨询记录共用）
 export const getSessionPageAPI = (params) => {
-  return service.get('/psychological-chat/sessions', { params })
+  return service.get('/psychological-chat/sessions', { params: normalizePageParams(params) })
 }
 
 // 删除咨询会话

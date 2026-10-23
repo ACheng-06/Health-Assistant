@@ -207,9 +207,11 @@
   import { fetchEventSource } from '@microsoft/fetch-event-source'
   import { startSessionAPI, getSessionPageAPI, getSessionMessagesAPI, getSessionEmotionAPI, deleteSessionAPI } from '@/api/chat'
   import { apiBaseUrl } from '@/config'
+  import { useAuthStore } from '@/store/auth'
   // 静态图片资源
 
   const router = useRouter()
+  const authStore = useAuthStore()
 
   const iconUrl1 = new URL('@/assets/images/logo.png', import.meta.url).href
   const iconUrl2 = new URL('@/assets/images/user.png', import.meta.url).href
@@ -249,6 +251,16 @@
       clearTimeout(streamFlushTimer)
       streamFlushTimer = null
     }
+  }
+
+  // 中止当前流并清空缓冲（切换/新建会话时调用，避免旧回复继续写入新会话）
+  const stopActiveStream = () => {
+    if (activeStreamController) {
+      activeStreamController.abort()
+      activeStreamController = null
+    }
+    discardStreamBuffer()
+    isAiTyping.value = false
   }
 
   const currentEmotion = ref({
@@ -293,7 +305,7 @@
   const getSessionPage = async () => {
     try {
       const res = await getSessionPageAPI({
-        page: 1,
+        currentPage: 1,
         size: 10
       })
 
@@ -353,6 +365,8 @@
 
   // 初始化新建会话
   const createNewFrontendSession = () => {
+    // 旧会话的流不应该继续写进新会话
+    stopActiveStream()
     const newSession = {
       sessionId: `temp_${Date.now()}`,
       status: 'TEMP',
@@ -373,9 +387,11 @@
 
   // 处理会话点击事件
   const handleSelectSessionClick = async (session) => {
+    // 切换会话前先停掉上一段对话的流，否则输入框会一直处于禁用状态
+    stopActiveStream()
     try {
       const res = await getSessionMessagesAPI(session.id)
-      messages.value = res
+      messages.value = res || []
       loadSessionEmotion(session.id)
     } catch (err) {
       console.error('加载会话记录失败', err)
@@ -445,6 +461,10 @@
       startAiResponse(currentSession.value.sessionId, msg)
     } catch (err) {
       console.error('创建会话失败:', err)
+      // 会话没建起来时把输入还给用户，避免消息丢失
+      if (!userMessage.value) {
+        userMessage.value = msg
+      }
     }
   }
 
@@ -503,10 +523,12 @@
 
         if (event.event === 'done') {
           flushStreamBuffer(messageId)
-          isAiTyping.value = false
+          if (activeStreamController === ctrl) {
+            isAiTyping.value = false
+          }
           ctrl.abort()
-          // 单次对话结束后，刷新当前会话的情绪卡片数据
-          loadSessionEmotion(currentSession.value.sessionId)
+          // 单次对话结束后，刷新当前会话的情绪卡片数据（用本次流的会话 id，避免切换到其它会话后刷错）
+          loadSessionEmotion(sessionId)
           return
         }
 
@@ -537,7 +559,10 @@
       },
       onclose: () => {
         flushStreamBuffer(messageId)
-        isAiTyping.value = false
+        // 只有在当前流未被新流/切换会话取代时才重置输入状态
+        if (activeStreamController === ctrl) {
+          isAiTyping.value = false
+        }
       }
     }).catch(() => {
       // fetchEventSource 被中止或抛错时 Promise 会 reject，错误已统一提示
@@ -545,16 +570,16 @@
       flushStreamBuffer(messageId)
       if (activeStreamController === ctrl) {
         activeStreamController = null
+        isAiTyping.value = false
       }
-      isAiTyping.value = false
     })
   }
 
   // 登录过期处理（SSE 不经过 axios 拦截器）
   const handleUnauthorized = (messageId = null) => {
     discardStreamBuffer()
-    localStorage.removeItem('token')
-    localStorage.removeItem('userInfo')
+    // 统一走 store，保证导航栏等依赖登录态的地方同步更新
+    authStore.logout()
     const target = messageId ? messages.value.find(m => m.id === messageId) : null
     if (target) {
       target.content = '登录已过期，请重新登录'

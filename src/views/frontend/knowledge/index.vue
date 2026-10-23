@@ -93,16 +93,19 @@
   //列表数据
   const articleList = ref([])
   //获取列表方法
-  const getPageList = () => {
+  const getPageList = async () => {
     const params = {
       sortField: 'publishedAt',
       sortDirection: 'desc',
       ...pagination,
     }
-    getArticlePageAPI(params).then(res => {
-      articleList.value = res.records
-      pagination.total = res.total
-    })
+    try {
+      const res = await getArticlePageAPI(params)
+      articleList.value = res?.records || []
+      pagination.total = res?.total || 0
+    } catch (error) {
+      console.error('获取文章列表失败:', error)
+    }
   }
 
   //获取封面图片
@@ -122,7 +125,7 @@
   }
 
   //挂载钩子
-  onMounted(() => {
+  onMounted(async () => {
     //获取推荐阅读列表
     const params = {
       sortField: '',
@@ -131,9 +134,12 @@
       size: 5
     }
     getPageList()
-    getArticlePageAPI(params).then(res => {
-      recommendList.value = res.records
-    })
+    try {
+      const res = await getArticlePageAPI(params)
+      recommendList.value = res?.records || []
+    } catch (error) {
+      console.error('获取推荐阅读失败:', error)
+    }
   })
 </script>
 

@@ -1,4 +1,5 @@
 import service from '@/utils/request'
+import { normalizePageParams } from '@/utils/pagination'
 
 // 新增情绪日记
 export const addEmotionDiaryAPI = (data) => {
@@ -7,7 +8,7 @@ export const addEmotionDiaryAPI = (data) => {
 
 // 后台分页查询情绪日记
 export const getEmotionDiaryPageAPI = (params) => {
-  return service.get('/emotion-diary/admin/page', { params })
+  return service.get('/emotion-diary/admin/page', { params: normalizePageParams(params) })
 }
 
 // 后台删除情绪日记

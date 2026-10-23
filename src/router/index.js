@@ -50,6 +50,7 @@ const backendroutes = [
   {
     path:'/auth',
     component:AuthLayout,
+    redirect:'/auth/login',
     children:[
       {
         path:'login',
@@ -80,20 +81,24 @@ const frontendroutes = [
             },
             {
                 path: 'consultation',
-                component: () => import('@/views/frontend/consultation/index.vue')
+                component: () => import('@/views/frontend/consultation/index.vue'),
+                meta: { requiresAuth: true }
             },
             {
                 path: 'emotion-diary',
-                component: () => import('@/views/frontend/emotion/index.vue')
+                component: () => import('@/views/frontend/emotion/index.vue'),
+                meta: { requiresAuth: true }
             },
             {
                 path: 'frontendKnowledge',
-                component: () => import('@/views/frontend/knowledge/index.vue')
+                component: () => import('@/views/frontend/knowledge/index.vue'),
+                meta: { requiresAuth: true }
             },
             {
                 path: 'knowledge/article/:id',
                 component: () => import('@/views/frontend/knowledge/detail.vue'),
-                props: true
+                props: true,
+                meta: { requiresAuth: true }
             }
         ]
   }
@@ -115,10 +120,13 @@ const router = createRouter({
 router.beforeEach((to, from, next) => {
   const token = getToken()
 
-  // 未登录：仅后台路由需要强制登录
+  // 未登录：后台路由与前台受限页面统一跳登录，并记录来源方便登录后回跳
   if (!token) {
-    if (to.path.startsWith('/back')) {
-      next('/auth/login')
+    if (to.path.startsWith('/back') || to.meta.requiresAuth) {
+      next({
+        path: '/auth/login',
+        query: to.fullPath === '/' ? {} : { redirect: to.fullPath }
+      })
     } else {
       next()
     }

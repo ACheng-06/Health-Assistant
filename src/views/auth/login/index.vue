@@ -24,7 +24,7 @@
           <el-input v-model="formData.password" size="large" placeholder="请输入密码" type="password" show-password
             @keyup.enter="submitForm(ruleFormRef)" />
         </el-form-item>
-        <el-button class="btn" size="large" type="primary" @click="submitForm(ruleFormRef)">登录</el-button>
+        <el-button class="btn" size="large" type="primary" :loading="loading" @click="submitForm(ruleFormRef)">登录</el-button>
       </el-form>
       <div class="footer">
         <p>还没有账户？<router-link to="/auth/register">去注册</router-link></p>
@@ -35,6 +35,7 @@
 
 <script setup>
   import { ref, reactive } from 'vue'
+  import { useRoute } from 'vue-router'
   import { ElMessage } from 'element-plus/es/components/message/index.mjs'
   import { Back } from '@element-plus/icons-vue'
   import router from '@/router'
@@ -42,7 +43,9 @@
   import { useAuthStore } from '@/store/auth'
 
   const authStore = useAuthStore()
+  const route = useRoute()
   const ruleFormRef = ref()
+  const loading = ref(false)
   const formData = reactive({ username: '', password: '' })
   const rules = reactive({
     username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
@@ -50,9 +53,10 @@
   })
 
   const submitForm = async (formEl) => {
-    if (!formEl) return
+    if (!formEl || loading.value) return
     const valid = await formEl.validate().catch(() => false)
     if (!valid) return
+    loading.value = true
     try {
       const actualData = await loginAPI(formData)
       if (!actualData?.token) {
@@ -60,9 +64,16 @@
         return
       }
       authStore.setAuth(actualData.token, actualData.userInfo)
-      router.push(authStore.isAdmin ? '/back/dashboard' : '/')
+
+      // 被守卫拦下时带回来源路径，只允许站内地址，避免开放重定向
+      const redirect = typeof route.query.redirect === 'string' ? route.query.redirect : ''
+      const fallback = authStore.isAdmin ? '/back/dashboard' : '/'
+      const target = redirect.startsWith('/') && !redirect.startsWith('//') ? redirect : fallback
+      router.push(target)
     } catch {
       // 错误提示已由请求拦截器统一处理
+    } finally {
+      loading.value = false
     }
   }
 </script>
