@@ -1,6 +1,6 @@
 <template>
   <el-aside :width="isCollapse ? '64px' : '264px'">
-    <el-menu default-active="2" class="menu-style" :collapse="isCollapse" :collapse-transition="false">
+    <el-menu :default-active="activeMenu" class="menu-style" :collapse="isCollapse" :collapse-transition="false">
       <div class="brand">
         <el-image style="width:50px; height:50px; margin-right:10px;" :src="iconURL" alt="brand-icon" />
         <div v-if="!isCollapse" class="info-card">
@@ -9,8 +9,8 @@
         </div>
       </div>
 
-      <el-menu-item @click="selectMenu" v-for="item in router.options.routes[0].children" :key="item.path"
-        :index="item.path">
+      <el-menu-item @click="selectMenu(item)" v-for="item in menuItems" :key="item.path"
+        :index="`${basePath}/${item.path}`">
         <el-icon>
           <component :is="iconMap[item.meta.icon]" />
         </el-icon>
@@ -22,11 +22,12 @@
 
 </template>
 <script setup>
-  import { useRouter } from 'vue-router'
+  import { useRoute, useRouter } from 'vue-router'
   import { useAdminStore } from '@/store/admin'
   import { computed } from 'vue'
   import { PieChart, ChatLineSquare, Message, User } from '@element-plus/icons-vue'
   const router = useRouter()
+  const route = useRoute()
   // 路由 meta.icon 保存图标名，这里显式映射为组件，避免依赖全局图标注册
   const iconMap = {
     PieChart,
@@ -34,10 +35,14 @@
     Message,
     User,
   }
+  const backendRoute = router.options.routes[0]
+  const basePath = backendRoute.path
+  const menuItems = backendRoute.children
+  // 完整路径作为菜单 index，当前路由变化时同步高亮
+  const activeMenu = computed(() => route.path)
   const iconURL = new URL('@/assets/images/机器人.png', import.meta.url).href
-  const selectMenu = (key) => {
-    const currentRoute = router.options.routes[0]
-    router.push(`${currentRoute.path}/${key.index}`)
+  const selectMenu = (item) => {
+    router.push(`${basePath}/${item.path}`)
   }
   const isCollapse = computed(() => useAdminStore().isCollapse)
 </script>

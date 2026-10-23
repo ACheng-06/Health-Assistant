@@ -27,8 +27,8 @@
             </el-icon>
             <!-- 确保有时间字段才进行格式化 -->
 
-            <span v-if="articleDetail.publishedAt || articleDetail.updateAt">
-              {{ dayjs(articleDetail.publishedAt || articleDetail.updateAt).format('YYYY-MM-DD') }}
+            <span v-if="articleDetail.publishedAt || articleDetail.updatedAt">
+              {{ dayjs(articleDetail.publishedAt || articleDetail.updatedAt).format('YYYY-MM-DD') }}
             </span>
           </div>
         </div>
@@ -98,14 +98,8 @@
 
   const formatContent = (content) => {
     if (!content) return ''
-
-    // 基本的HTML清理和格式化
-    const formatted = content
-      .replace(/\n/g, '<br>')
-      .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
-      .replace(/\*(.*?)\*/g, '<em>$1</em>')
-
-    return sanitizeHtml(formatted)
+    // 正文由富文本编辑器保存为 HTML，直接净化后渲染（不要再做换行/星号转换）
+    return sanitizeHtml(content)
   }
 
   const loadArticle = async (articleId) => {
