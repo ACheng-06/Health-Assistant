@@ -84,6 +84,7 @@
   import { useRoute, useRouter } from 'vue-router' // 
   import { getKnowledgeDetailAPI } from '@/api/frontend'
   import { dayjs } from 'element-plus'
+  import { sanitizeHtml } from '@/utils/sanitize'
 
 
   const iconUrl = new URL('@/assets/images/book.png', import.meta.url).href
@@ -99,12 +100,12 @@
     if (!content) return ''
 
     // 基本的HTML清理和格式化
-    let formatted = content
+    const formatted = content
       .replace(/\n/g, '<br>')
       .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
       .replace(/\*(.*?)\*/g, '<em>$1</em>')
 
-    return formatted
+    return sanitizeHtml(formatted)
   }
 
   onMounted(() => {

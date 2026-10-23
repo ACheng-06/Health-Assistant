@@ -44,7 +44,7 @@
 
     <div v-if="btnPreview">
       <h3>内容预览</h3>
-      <div v-html="formData.content" style="border: 1px solid #eee; padding: 10px;"></div>
+      <div v-html="previewHtml" style="border: 1px solid #eee; padding: 10px;"></div>
     </div>
 
     <template #footer>
@@ -60,6 +60,7 @@
   import { ElMessage } from 'element-plus'
   import { uploadFileAPI, createArticleAPI, updateArticleAPI } from '@/api/admin'
   import { fileBaseUrl } from '@/config/index.js'
+  import { sanitizeHtml } from '@/utils/sanitize'
   import RichTextEditor from './RichTextEditor.vue'
 
   const props = defineProps({
@@ -139,6 +140,8 @@
     get: () => props.modelValue,
     set: (val) => emit('update:modelValue', val)
   })
+
+  const previewHtml = computed(() => sanitizeHtml(formData.content))
 
 
   const imgUrl = ref("")
