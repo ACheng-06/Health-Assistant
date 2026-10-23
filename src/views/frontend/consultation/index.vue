@@ -199,9 +199,11 @@
 
 <script setup>
   import MarkdownRenderer from './MarkdownRenderer.vue'
-  import { ref, onMounted, onBeforeUnmount, nextTick } from 'vue'
+  import { ref, onMounted, onBeforeUnmount } from 'vue'
   import { useRouter } from 'vue-router'
-  import { ElMessage, ElMessageBox } from 'element-plus'
+  import { ElMessage } from 'element-plus/es/components/message/index.mjs'
+  import { ElMessageBox } from 'element-plus/es/components/message-box/index.mjs'
+  import { ChatRound, Clock, Delete, Plus, Promotion } from '@element-plus/icons-vue'
   import { fetchEventSource } from '@microsoft/fetch-event-source'
   import { startSessionAPI, getSessionPageAPI, getSessionMessagesAPI, getSessionEmotionAPI, deleteSessionAPI } from '@/api/chat'
   import { apiBaseUrl } from '@/config'
@@ -221,6 +223,33 @@
   const chatMessagesRef = ref(null)
   // 当前正在进行的 SSE 连接，用于组件卸载时中止
   let activeStreamController = null
+
+  // 流式内容缓冲：逐片触发响应式更新会导致主线程频繁重排，按固定间隔批量合并
+  const STREAM_FLUSH_INTERVAL = 80
+  let streamBuffer = ''
+  let streamFlushTimer = null
+
+  const flushStreamBuffer = (messageId) => {
+    if (streamFlushTimer) {
+      clearTimeout(streamFlushTimer)
+      streamFlushTimer = null
+    }
+    if (!streamBuffer) return
+    const targetMsg = messages.value.find(m => m.id === messageId)
+    const pending = streamBuffer
+    streamBuffer = ''
+    if (!targetMsg) return
+    targetMsg.content += pending
+    scrollToBottom()
+  }
+
+  const discardStreamBuffer = () => {
+    streamBuffer = ''
+    if (streamFlushTimer) {
+      clearTimeout(streamFlushTimer)
+      streamFlushTimer = null
+    }
+  }
 
   const currentEmotion = ref({
     primaryEmotion: '中性',
@@ -310,8 +339,12 @@
 
 
 
+  // 滚动到底部：用 rAF 节流，流式输出时每帧最多触发一次
+  let scrollRafId = null
   const scrollToBottom = () => {
-    nextTick(() => {
+    if (scrollRafId) return
+    scrollRafId = requestAnimationFrame(() => {
+      scrollRafId = null
       if (chatMessagesRef.value) {
         chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
       }
@@ -452,12 +485,14 @@
       onopen: (response) => {
         // SSE 不经过 axios 拦截器，需要自行处理登录过期
         if (response.status === 401 || response.status === 403) {
+          discardStreamBuffer()
           handleUnauthorized(messageId)
           ctrl.abort()
           return
         }
         const contentType = response.headers.get('Content-Type') || ''
         if (!response.ok || !contentType.includes('text/event-stream')) {
+          discardStreamBuffer()
           handleError('服务器响应异常，请稍后重试', messageId)
           ctrl.abort()
         }
@@ -467,6 +502,7 @@
         if (!res) return
 
         if (event.event === 'done') {
+          flushStreamBuffer(messageId)
           isAiTyping.value = false
           ctrl.abort()
           // 单次对话结束后，刷新当前会话的情绪卡片数据
@@ -478,12 +514,12 @@
           const payload = JSON.parse(res)
           const ok = String(payload.code) === '200'
           if (ok && payload.data && payload.data.content) {
-            const targetMsg = messages.value.find(m => m.id === messageId)
-            if (targetMsg) {
-              targetMsg.content += payload.data.content
-              scrollToBottom()
+            streamBuffer += payload.data.content
+            if (!streamFlushTimer) {
+              streamFlushTimer = setTimeout(() => flushStreamBuffer(messageId), STREAM_FLUSH_INTERVAL)
             }
           } else {
+            discardStreamBuffer()
             handleError(payload.message || 'AI回复失败', messageId)
           }
         } catch (e) {
@@ -494,16 +530,19 @@
         // 主动中止（结束对话/切换页面）不当作连接错误
         if (err?.name === 'AbortError') return
         console.error('SSE 连接异常:', err)
+        discardStreamBuffer()
         handleError('网络连接中断或AI回复失败', messageId)
         ctrl.abort()
         throw err
       },
       onclose: () => {
+        flushStreamBuffer(messageId)
         isAiTyping.value = false
       }
     }).catch(() => {
       // fetchEventSource 被中止或抛错时 Promise 会 reject，错误已统一提示
     }).finally(() => {
+      flushStreamBuffer(messageId)
       if (activeStreamController === ctrl) {
         activeStreamController = null
       }
@@ -513,6 +552,7 @@
 
   // 登录过期处理（SSE 不经过 axios 拦截器）
   const handleUnauthorized = (messageId = null) => {
+    discardStreamBuffer()
     localStorage.removeItem('token')
     localStorage.removeItem('userInfo')
     const target = messageId ? messages.value.find(m => m.id === messageId) : null
@@ -527,6 +567,7 @@
 
   // 统一错误处理：优先定位到具体的 AI 消息
   const handleError = (errorMsg, messageId = null) => {
+    discardStreamBuffer()
     const target = messageId
       ? messages.value.find(m => m.id === messageId)
       : messages.value[messages.value.length - 1]
@@ -539,6 +580,11 @@
   }
 
   onBeforeUnmount(() => {
+    discardStreamBuffer()
+    if (scrollRafId) {
+      cancelAnimationFrame(scrollRafId)
+      scrollRafId = null
+    }
     if (activeStreamController) {
       activeStreamController.abort()
       activeStreamController = null

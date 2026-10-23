@@ -12,7 +12,7 @@
       <el-menu-item @click="selectMenu" v-for="item in router.options.routes[0].children" :key="item.path"
         :index="item.path">
         <el-icon>
-          <component :is="item.meta.icon" />
+          <component :is="iconMap[item.meta.icon]" />
         </el-icon>
         <span>{{ item.meta.title }}</span>
       </el-menu-item>
@@ -25,7 +25,15 @@
   import { useRouter } from 'vue-router'
   import { useAdminStore } from '@/store/admin'
   import { computed } from 'vue'
+  import { PieChart, ChatLineSquare, Message, User } from '@element-plus/icons-vue'
   const router = useRouter()
+  // 路由 meta.icon 保存图标名，这里显式映射为组件，避免依赖全局图标注册
+  const iconMap = {
+    PieChart,
+    ChatLineSquare,
+    Message,
+    User,
+  }
   const iconURL = new URL('@/assets/images/机器人.png', import.meta.url).href
   const selectMenu = (key) => {
     const currentRoute = router.options.routes[0]

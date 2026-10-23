@@ -1,5 +1,5 @@
 import axios from 'axios'
-import { ElMessage } from 'element-plus'
+import { ElMessage } from 'element-plus/es/components/message/index.mjs'
 import router from '@/router'
 import { clearAuthStorage } from '@/utils/auth'
 import { apiBaseUrl } from '@/config'

@@ -33,6 +33,7 @@
   import userImg from '@/assets/images/user.jpg'
   import { useAdminStore } from '@/store/admin'
   import { useAuthStore } from '@/store/auth'
+  import { Expand, ArrowDown } from '@element-plus/icons-vue'
   const router = useRouter()
   const authStore = useAuthStore()
   const handleCommand = async (command) => {

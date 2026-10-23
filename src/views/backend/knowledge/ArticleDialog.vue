@@ -56,12 +56,13 @@
   </el-dialog>
 </template>
 <script setup>
-  import { ref, reactive, computed, watch, nextTick } from 'vue'
-  import { ElMessage } from 'element-plus'
+  import { ref, reactive, computed, watch, nextTick, defineAsyncComponent } from 'vue'
+  import { ElMessage } from 'element-plus/es/components/message/index.mjs'
   import { uploadFileAPI, createArticleAPI, updateArticleAPI } from '@/api/knowledge'
   import { fileBaseUrl } from '@/config/index.js'
   import { sanitizeHtml } from '@/utils/sanitize'
-  import RichTextEditor from './RichTextEditor.vue'
+  // 富文本编辑器体积较大，弹窗首次打开时再加载
+  const RichTextEditor = defineAsyncComponent(() => import('./RichTextEditor.vue'))
 
   const props = defineProps({
     categories: {

@@ -115,8 +115,14 @@
 </template>
 <script setup>
   import { getAnalyticsOverviewAPI } from '@/api/analytics'
-  import { onMounted, ref, nextTick } from 'vue'
-  import * as echarts from 'echarts'
+  import { onMounted, onBeforeUnmount, ref, nextTick } from 'vue'
+  // ECharts 按需引入，只打包看板实际使用的图表与组件
+  import * as echarts from 'echarts/core'
+  import { LineChart, BarChart } from 'echarts/charts'
+  import { TitleComponent, TooltipComponent, GridComponent, LegendComponent } from 'echarts/components'
+  import { CanvasRenderer } from 'echarts/renderers'
+
+  echarts.use([LineChart, BarChart, TitleComponent, TooltipComponent, GridComponent, LegendComponent, CanvasRenderer])
 
   //统计图片引入
   const iconUrl1 = new URL('@/assets/images/users.png', import.meta.url).href
@@ -398,24 +404,49 @@
     userActivityChart.setOption(option)
   }
 
+  const handleResize = () => {
+    if (emotionChart) emotionChart.resize()
+    if (consultationChart) consultationChart.resize()
+    if (userActivityChart) userActivityChart.resize()
+  }
+
+  // 防止组件卸载后才完成数据请求，避免重复绑定 resize 与短暂泄漏
+  let isDisposed = false
+
   onMounted(async () => {
     try {
       const res = await getAnalyticsOverviewAPI()
       aiData.value = (res.data && res.data.data) || res.data || res || {}
       nextTick(() => {
+        if (isDisposed) return
+
         initEmotional()
         initConsultationChart()
         initUserActivityChart()
 
         // 监听窗口大小改变，使三个图表都自动适应宽度
-        window.addEventListener('resize', () => {
-          if (emotionChart) emotionChart.resize()
-          if (consultationChart) consultationChart.resize()
-          if (userActivityChart) userActivityChart.resize()
-        })
+        window.addEventListener('resize', handleResize)
       })
     } catch (error) {
       console.error('获取仪表盘数据失败:', error)
+    }
+  })
+
+  onBeforeUnmount(() => {
+    isDisposed = true
+    window.removeEventListener('resize', handleResize)
+
+    if (emotionChart) {
+      emotionChart.dispose()
+      emotionChart = null
+    }
+    if (consultationChart) {
+      consultationChart.dispose()
+      consultationChart = null
+    }
+    if (userActivityChart) {
+      userActivityChart.dispose()
+      userActivityChart = null
     }
   })
 </script>

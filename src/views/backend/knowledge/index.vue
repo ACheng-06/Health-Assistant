@@ -11,7 +11,7 @@
         <template #default="scope">
           <div style="display: flex; align-items: center;">
             <el-icon>
-              <timer />
+              <Timer />
             </el-icon>
             <span>{{ scope.row.title }}</span>
           </div>
@@ -52,7 +52,9 @@
   import PageHead from '@/views/backend/PageHead.vue'
   import TableSearch from '@/views/backend/TableSearch.vue'
   import ArticleDialog from '@/views/backend/knowledge/ArticleDialog.vue'
-  import { ElMessage, ElMessageBox } from 'element-plus'
+  import { ElMessage } from 'element-plus/es/components/message/index.mjs'
+  import { ElMessageBox } from 'element-plus/es/components/message-box/index.mjs'
+  import { Timer } from '@element-plus/icons-vue'
 
   const formItem = ref([
     {

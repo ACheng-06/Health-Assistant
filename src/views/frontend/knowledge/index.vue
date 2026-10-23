@@ -69,7 +69,7 @@
   import { ref, onMounted, reactive } from 'vue'
   import { getArticlePageAPI } from '@/api/knowledge'
   import { fileBaseUrl } from '@/config'
-  import { dayjs } from 'element-plus'
+  import dayjs from 'dayjs'
   import { useRouter } from 'vue-router'
   import { Histogram, Avatar, List, Platform } from '@element-plus/icons-vue'
 

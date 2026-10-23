@@ -94,7 +94,8 @@
 </template>
 <script setup>
 
-  import { dayjs, ElMessage } from 'element-plus'
+  import dayjs from 'dayjs'
+  import { ElMessage } from 'element-plus/es/components/message/index.mjs'
   import { ref, reactive } from 'vue'
   import { addEmotionDiaryAPI } from '@/api/emotion'
 

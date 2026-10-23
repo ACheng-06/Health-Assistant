@@ -23,6 +23,10 @@
 </template>
 <script setup>
   import { ref, reactive, computed } from 'vue'
+  // 动态组件 :is 无法被按需插件静态解析，这里直接返回组件对象
+  import { ElInput } from 'element-plus/es/components/input/index.mjs'
+  import { ElSelect } from 'element-plus/es/components/select/index.mjs'
+  import { ElDatePicker } from 'element-plus/es/components/date-picker/index.mjs'
 
   const ruleFormRef = ref()
 
@@ -42,13 +46,14 @@
     }))
   })
 
+  // 动态组件 :is 无法被按需插件静态解析，这里直接返回组件对象
   const getComponent = (comp) => {
     const map = {
-      input: 'ElInput',
-      select: 'ElSelect',
-      date: 'ElDatePicker'
+      input: ElInput,
+      select: ElSelect,
+      date: ElDatePicker
     }
-    return map[comp] || 'ElInput'
+    return map[comp] || ElInput
   }
 
   const emit = defineEmits(['search'])

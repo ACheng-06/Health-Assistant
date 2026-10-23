@@ -22,7 +22,7 @@
 
 <script setup>
   import { ref, reactive, computed, onBeforeUnmount, shallowRef, watch } from 'vue'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage } from 'element-plus/es/components/message/index.mjs'
   import '@wangeditor/editor/dist/css/style.css'
   import { Editor as WangEditor, Toolbar as WangToolbar } from '@wangeditor/editor-for-vue'
 

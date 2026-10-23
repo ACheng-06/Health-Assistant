@@ -64,7 +64,7 @@
 <script setup>
   import { ref, reactive } from 'vue'
   import { registerAPI } from '@/api/auth'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage } from 'element-plus/es/components/message/index.mjs'
   import { useRouter } from 'vue-router'
   const router = useRouter()
   const emailSuffix = ref('@qq.com')

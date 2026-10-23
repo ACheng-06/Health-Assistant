@@ -2,16 +2,17 @@ import { createApp } from 'vue'
 import router from './router'
 import App from './App.vue'
 import './style.css'
-import ElementPlus from 'element-plus'
-import 'element-plus/dist/index.css'
-import {createPinia} from 'pinia'
-import * as ElementPlusIconsVue from '@element-plus/icons-vue'
+import { createPinia } from 'pinia'
+import { ElLoading } from 'element-plus/es/components/loading/index.mjs'
+// Element Plus 组件由 unplugin-vue-components 按需引入；
+// 通过 JS 调用的 Message / MessageBox / Loading 指令需手动注册并引入样式
+import 'element-plus/es/components/message/style/css'
+import 'element-plus/es/components/message-box/style/css'
+import 'element-plus/es/components/loading/style/css'
 
 const app = createApp(App)
-for (const [key, component] of Object.entries(ElementPlusIconsVue)) {
-  app.component(key, component)
-}
-app.use(ElementPlus)
+// 注册 v-loading 指令，并保留全局 $loading 服务
+app.use(ElLoading)
 app.use(router)
-app.use(createPinia())  
+app.use(createPinia())
 app.mount('#app')

@@ -35,7 +35,8 @@
 
 <script setup>
   import { ref, reactive } from 'vue'
-  import { ElMessage } from 'element-plus'
+  import { ElMessage } from 'element-plus/es/components/message/index.mjs'
+  import { Back } from '@element-plus/icons-vue'
   import router from '@/router'
   import { loginAPI } from '@/api/auth'
   import { useAuthStore } from '@/store/auth'

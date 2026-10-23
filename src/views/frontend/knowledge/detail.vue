@@ -83,7 +83,8 @@
   import { ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router' // 
   import { getArticleDetailAPI } from '@/api/knowledge'
-  import { dayjs } from 'element-plus'
+  import dayjs from 'dayjs'
+  import { ArrowLeft, List, Avatar, Platform } from '@element-plus/icons-vue'
   import { sanitizeHtml } from '@/utils/sanitize'
 
 

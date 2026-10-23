@@ -127,7 +127,8 @@
 <script setup>
   import { ref, reactive, onMounted } from 'vue'
   import { getEmotionDiaryPageAPI, deleteEmotionDiaryAPI } from '@/api/emotion'
-  import { ElMessage, ElMessageBox } from 'element-plus'
+  import { ElMessage } from 'element-plus/es/components/message/index.mjs'
+  import { ElMessageBox } from 'element-plus/es/components/message-box/index.mjs'
   import pageHead from '@/views/backend/PageHead.vue'
   import TableSearch from '@/views/backend/TableSearch.vue'
 
