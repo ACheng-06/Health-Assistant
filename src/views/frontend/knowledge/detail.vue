@@ -80,7 +80,7 @@
 </template>
 
 <script setup>
-  import { ref, onMounted } from 'vue'
+  import { ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router' // 
   import { getKnowledgeDetailAPI } from '@/api/frontend'
   import { dayjs } from 'element-plus'
@@ -92,7 +92,6 @@
 
   const route = useRoute()
   const router = useRouter()
-  const articleId = route.params.id
 
   const articleDetail = ref({})
 
@@ -108,22 +107,25 @@
     return sanitizeHtml(formatted)
   }
 
-  onMounted(() => {
-    if (articleId) {
-      getKnowledgeDetailAPI(articleId).then(res => {
+  const loadArticle = async (articleId) => {
+    if (!articleId) return
+    try {
+      const res = await getKnowledgeDetailAPI(articleId)
 
-        if (res.tags && typeof res.tags === 'string') {
-          res.tagArray = res.tags.split(',')
-        } else if (Array.isArray(res.tags)) {
-          res.tagArray = res.tags
-        }
+      if (res.tags && typeof res.tags === 'string') {
+        res.tagArray = res.tags.split(',')
+      } else if (Array.isArray(res.tags)) {
+        res.tagArray = res.tags
+      }
 
-        articleDetail.value = res
-      }).catch(err => {
-        console.error("获取文章详情失败:", err)
-      })
+      articleDetail.value = res
+    } catch (err) {
+      console.error("获取文章详情失败:", err)
     }
-  })
+  }
+
+  // 同一路由切换文章 id 时组件会被复用，需要监听参数变化重新拉取
+  watch(() => route.params.id, (id) => loadArticle(id), { immediate: true })
 </script>
 
 <style lang="scss" scoped>

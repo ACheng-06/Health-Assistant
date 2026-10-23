@@ -2,11 +2,13 @@ import { createRouter, createWebHistory } from 'vue-router'
 import BackendLayout from '@/views/backend/BackendLayout.vue'
 import AuthLayout from '@/views/auth/AuthLayout.vue'
 import FrontendLayout from '@/views/frontend/FrontendLayout.vue'
+import { getToken, getUserInfo, isAdminUser } from '@/utils/auth'
 
 const backendroutes = [
   {
     path: '/back',
     component: BackendLayout,
+    redirect: '/back/dashboard',
     children: [
       {
         path: 'dashboard',
@@ -100,30 +102,49 @@ const frontendroutes = [
 
 const router = createRouter({
   history: createWebHistory(),
-  routes: [...backendroutes, ...frontendroutes]
+  routes: [
+    ...backendroutes,
+    ...frontendroutes,
+    {
+      path: '/:pathMatch(.*)*',
+      component: () => import('@/views/NotFound.vue')
+    }
+  ]
 })
 
 router.beforeEach((to, from, next) => {
-  const token = localStorage.getItem('token')
-    if (token) {
-        try {
-            const userInfo = JSON.parse(localStorage.getItem('userInfo') || '{}')
-            if (to.path.startsWith('/auth')) {
-                next(userInfo.userType == 2 ? '/back/dashboard' : '/')
-                return
-            }
-            if (userInfo.userType == 2) {
-                next()
-            } else {
-                to.path.startsWith('/back') ? next('/') : next()
-            }
-        } catch (error) {
-            localStorage.clear()
-            next('/auth/login')
-        }
+  const token = getToken()
+
+  // 未登录：仅后台路由需要强制登录
+  if (!token) {
+    if (to.path.startsWith('/back')) {
+      next('/auth/login')
     } else {
-        to.path.startsWith('/back') ? next('/auth/login') : next()
+      next()
     }
+    return
+  }
+
+  const userInfo = getUserInfo()
+
+  // 已登录用户访问登录/注册页时，按角色回到各自的首页
+  if (to.path.startsWith('/auth')) {
+    next(isAdminUser(userInfo) ? '/back/dashboard' : '/')
+    return
+  }
+
+  if (isAdminUser(userInfo)) {
+    next()
+    return
+  }
+
+  // 普通用户禁止访问后台
+  if (to.path.startsWith('/back')) {
+    next('/')
+    return
+  }
+
+  next()
 })
 
 export default router

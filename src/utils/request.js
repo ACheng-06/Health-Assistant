@@ -1,6 +1,7 @@
 import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
+import { clearAuthStorage } from '@/utils/auth'
 
 const service = axios.create({
   baseURL: '/api',
@@ -39,9 +40,8 @@ service.interceptors.response.use(
             if (isTokenExpired) {
                 if (!config.url?.includes('/login')) {
                     ElMessage.error(data.msg || '登录过期，请重新登录')
-                    localStorage.removeItem('token')
-                    localStorage.removeItem('userInfo')
-                    window.location.href = '/auth/login' // 使用绝对路径
+                    clearAuthStorage()
+                    router.push('/auth/login')
                 }
                 return Promise.reject('Token Expired')
             } else {

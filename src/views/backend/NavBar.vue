@@ -32,14 +32,19 @@
   import { getLogoutAPI } from '@/api/admin'
   import userImg from '@/assets/images/user.jpg'
   import { useAdminStore } from '@/store/admin'
+  import { useAuthStore } from '@/store/auth'
   const router = useRouter()
+  const authStore = useAuthStore()
   const handleCommand = async (command) => {
     if (command === 'logout') {
       // 退出登录逻辑
-      await getLogoutAPI()
-      localStorage.removeItem('token')
-      localStorage.removeItem('userInfo')
-      router.push('/auth/login')
+      try {
+        await getLogoutAPI()
+      } catch (e) {
+      } finally {
+        authStore.logout()
+        router.push('/auth/login')
+      }
     }
   }
   const handleCollapse = () => {

@@ -17,10 +17,12 @@
     <div class="form-container">
       <el-form ref="ruleFormRef" :model="formData" :rules="rules" label-position="top">
         <el-form-item label="用户名或邮箱" prop="username">
-          <el-input v-model="formData.username" size="large" placeholder="请输入用户名或邮箱" />
+          <el-input v-model="formData.username" size="large" placeholder="请输入用户名或邮箱"
+            @keyup.enter="submitForm(ruleFormRef)" />
         </el-form-item>
         <el-form-item label="密码" prop="password">
-          <el-input v-model="formData.password" size="large" placeholder="请输入密码" type="password" show-password />
+          <el-input v-model="formData.password" size="large" placeholder="请输入密码" type="password" show-password
+            @keyup.enter="submitForm(ruleFormRef)" />
         </el-form-item>
         <el-button class="btn" size="large" type="primary" @click="submitForm(ruleFormRef)">登录</el-button>
       </el-form>
@@ -33,9 +35,12 @@
 
 <script setup>
   import { ref, reactive } from 'vue'
+  import { ElMessage } from 'element-plus'
   import router from '@/router'
   import { getLoginAPI } from '@/api/admin'
+  import { useAuthStore } from '@/store/auth'
 
+  const authStore = useAuthStore()
   const ruleFormRef = ref()
   const formData = reactive({ username: '', password: '' })
   const rules = reactive({
@@ -45,30 +50,20 @@
 
   const submitForm = async (formEl) => {
     if (!formEl) return
-    const valid = await formEl.validate()
+    const valid = await formEl.validate().catch(() => false)
     if (!valid) return
     try {
       const actualData = await getLoginAPI(formData)
-      const token = actualData.token
-      const userInfo = actualData.userInfo
-      const roleType = actualData.roleType
-      if (!token) return
-      localStorage.setItem('token', token)
-      if (userInfo) {
-        localStorage.setItem('userInfo', JSON.stringify(userInfo))
+      if (!actualData?.token) {
+        ElMessage.error('登录失败，未获取到登录凭证')
+        return
       }
-
-      if (roleType == 2) {
-        router.push('/back/dashboard')
-      } else {
-        router.push('/')
-      }
-    } catch (error) {
-      ElMessage.error(error.message || '登录失败')
-      return
+      authStore.setAuth(actualData.token, actualData.userInfo)
+      router.push(authStore.isAdmin ? '/back/dashboard' : '/')
+    } catch {
+      // 错误提示已由请求拦截器统一处理
     }
   }
-
 </script>
 <style scoped lang="scss">
 .container {

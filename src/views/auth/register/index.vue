@@ -51,7 +51,7 @@
         </el-form-item>
 
         <el-form-item>
-          <el-button class="btn" type="primary" size="large" @click="submitForm(submitFormRef)">注册</el-button>
+          <el-button class="btn" type="primary" size="large" :loading="loading" @click="submitForm(submitFormRef)">注册</el-button>
         </el-form-item>
       </el-form>
       <div class="footer">
@@ -79,15 +79,13 @@
     userType: 1
   })
 
-
-
-
   const rules = reactive({
     "username": [
       { required: true, message: "请输入用户名", trigger: "blur" }
     ],
     "email": [
-      { required: true, message: "请输入邮箱", trigger: "blur" }
+      { required: true, message: "请输入邮箱", trigger: "blur" },
+      { pattern: /^[^\s@]+$/, message: "请输入正确的邮箱前缀", trigger: "blur" }
     ],
     "nickname": [
       { required: true, message: "请输入昵称", trigger: "blur" }
@@ -104,25 +102,41 @@
     ],
     "confirmPassword": [
       { required: true, message: "请再次输入确认密码", trigger: "blur" },
+      {
+        validator: (_rule, value, callback) => {
+          if (value !== formData.password) {
+            callback(new Error("两次输入的密码不一致"))
+            return
+          }
+          callback()
+        },
+        trigger: "blur"
+      }
     ]
   })
 
   const submitFormRef = ref(null)
+  const loading = ref(false)
+
   const submitForm = async (formEl) => {
-    if (!formEl) return
-    await formEl.validate()
-    formData.email = formData.email + emailSuffix.value
-    const res = await getRegisterAPI(formData)
+    if (!formEl || loading.value) return
+    const valid = await formEl.validate().catch(() => false)
+    if (!valid) return
 
-    if (res?.data?.code === 'BUSINESS_ERROR') {
-      ElMessage.error(res.data.message)
-      formEl.resetFields()
-      return
+    loading.value = true
+    try {
+      // 在副本上拼接邮箱后缀，避免重复提交时污染表单原值
+      await getRegisterAPI({
+        ...formData,
+        email: `${formData.email}${emailSuffix.value}`
+      })
+      ElMessage.success('注册成功')
+      router.push('/auth/login')
+    } catch {
+      // 错误提示已由请求拦截器统一处理
+    } finally {
+      loading.value = false
     }
-
-    ElMessage.success('注册成功')
-    router.push('/auth/login')
-
   }
 </script>
 <style scoped lang="scss">
