@@ -29,7 +29,7 @@
 
 <script setup>
   import { useRoute, useRouter } from 'vue-router'
-  import { getLogoutAPI } from '@/api/admin'
+  import { logoutAPI } from '@/api/auth'
   import userImg from '@/assets/images/user.jpg'
   import { useAdminStore } from '@/store/admin'
   import { useAuthStore } from '@/store/auth'
@@ -39,7 +39,7 @@
     if (command === 'logout') {
       // 退出登录逻辑
       try {
-        await getLogoutAPI()
+        await logoutAPI()
       } catch (e) {
       } finally {
         authStore.logout()

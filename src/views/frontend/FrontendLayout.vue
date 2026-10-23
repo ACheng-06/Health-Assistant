@@ -30,7 +30,7 @@
 <script setup>
   import { computed } from 'vue'
   import { useRouter } from 'vue-router'
-  import { getLogoutAPI } from '@/api/admin'
+  import { logoutAPI } from '@/api/auth'
   import { useAuthStore } from '@/store/auth'
 
   const iconUrl = new URL('@/assets/images/机器人.png', import.meta.url).href
@@ -41,7 +41,7 @@
 
   const handleLogout = async () => {
     try {
-      await getLogoutAPI()
+      await logoutAPI()
     } catch (e) {
     } finally {
       authStore.logout()

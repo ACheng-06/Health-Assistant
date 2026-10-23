@@ -96,7 +96,7 @@
 
   import { dayjs, ElMessage } from 'element-plus'
   import { ref, reactive } from 'vue'
-  import { addEmotionDiaryAPI } from '@/api/frontend'
+  import { addEmotionDiaryAPI } from '@/api/emotion'
 
   //情绪评分
   const emotionStatus = ['绝望崩溃', '消沉抑郁', '焦虑烦躁', '低落不悦', '平静淡然', '轻松惬意', '愉悦舒心', '欢欣满足', '兴奋欣喜', '极致幸福']
@@ -163,8 +163,8 @@
       await addEmotionDiaryAPI(diaryForm)
       ElMessage.success('提交成功')
       resetForm()
-    } catch (error) {
-      ElMessage.error('提交失败，请重试')
+    } catch {
+      // 错误提示已由请求拦截器统一处理
     }
   }
 

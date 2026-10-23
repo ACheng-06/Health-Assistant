@@ -203,7 +203,8 @@
   import { useRouter } from 'vue-router'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import { fetchEventSource } from '@microsoft/fetch-event-source'
-  import { startSessionAPI, getSessionListAPI, getSessionDetailAPI, getSessionEmotionAPI, deleteSessionAPI } from '@/api/frontend'
+  import { startSessionAPI, getSessionPageAPI, getSessionMessagesAPI, getSessionEmotionAPI, deleteSessionAPI } from '@/api/chat'
+  import { apiBaseUrl } from '@/config'
   // 静态图片资源
 
   const router = useRouter()
@@ -262,7 +263,7 @@
   // 分页获取历史会话列表
   const getSessionPage = async () => {
     try {
-      const res = await getSessionListAPI({
+      const res = await getSessionPageAPI({
         page: 1,
         size: 10
       })
@@ -283,7 +284,7 @@
         type: 'warning'
       })
     } catch {
-      ElMessage.error('已取消删除操作')
+      // 用户取消删除
       return
     }
 
@@ -296,7 +297,6 @@
       }
     } catch (err) {
       console.error('删除会话失败:', err)
-      ElMessage.error('删除会话失败，请重试')
     }
   }
 
@@ -341,12 +341,11 @@
   // 处理会话点击事件
   const handleSelectSessionClick = async (session) => {
     try {
-      const res = await getSessionDetailAPI(session.id)
+      const res = await getSessionMessagesAPI(session.id)
       messages.value = res
       loadSessionEmotion(session.id)
     } catch (err) {
       console.error('加载会话记录失败', err)
-      ElMessage.error('加载会话记录失败')
     }
 
     // 更新当前会话追踪状态
@@ -413,7 +412,6 @@
       startAiResponse(currentSession.value.sessionId, msg)
     } catch (err) {
       console.error('创建会话失败:', err)
-      ElMessage.error('创建会话失败，请重试')
     }
   }
 
@@ -439,7 +437,7 @@
     const ctrl = new AbortController()
     activeStreamController = ctrl
 
-    fetchEventSource('/api/psychological-chat/stream', {
+    fetchEventSource(`${apiBaseUrl}/psychological-chat/stream`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

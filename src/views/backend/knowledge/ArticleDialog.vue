@@ -58,7 +58,7 @@
 <script setup>
   import { ref, reactive, computed, watch, nextTick } from 'vue'
   import { ElMessage } from 'element-plus'
-  import { uploadFileAPI, createArticleAPI, updateArticleAPI } from '@/api/admin'
+  import { uploadFileAPI, createArticleAPI, updateArticleAPI } from '@/api/knowledge'
   import { fileBaseUrl } from '@/config/index.js'
   import { sanitizeHtml } from '@/utils/sanitize'
   import RichTextEditor from './RichTextEditor.vue'
@@ -211,7 +211,7 @@
       emit('success')
       dialogVisible.value = false
     } catch (error) {
-      ElMessage.error('操作失败')
+      // 错误提示已由请求拦截器统一处理
     } finally {
       loading.value = false
     }

@@ -63,7 +63,7 @@
 
 <script setup>
   import { ref, reactive } from 'vue'
-  import { getRegisterAPI } from '@/api/frontend'
+  import { registerAPI } from '@/api/auth'
   import { ElMessage } from 'element-plus'
   import { useRouter } from 'vue-router'
   const router = useRouter()
@@ -126,7 +126,7 @@
     loading.value = true
     try {
       // 在副本上拼接邮箱后缀，避免重复提交时污染表单原值
-      await getRegisterAPI({
+      await registerAPI({
         ...formData,
         email: `${formData.email}${emailSuffix.value}`
       })

@@ -70,7 +70,7 @@
 </template>
 <script setup>
   import PageHead from '@/views/backend/PageHead.vue'
-  import { getConsultationPageAPI, getSessionDetailAPI } from '@/api/admin'
+  import { getSessionPageAPI, getSessionMessagesAPI } from '@/api/chat'
   import { ref, onMounted, reactive } from 'vue'
 
   const tableData = ref([])
@@ -91,8 +91,10 @@
     sessionDetail.value = row
     loadingMessages.value = true
     try {
-      const res = await getSessionDetailAPI(row.id)
+      const res = await getSessionMessagesAPI(row.id)
       sessionMessages.value = res || []
+    } catch (err) {
+      console.error('加载会话详情失败:', err)
     } finally {
       loadingMessages.value = false
     }
@@ -107,7 +109,7 @@
     const params = {
       ...pagination,
     }
-    const res = await getConsultationPageAPI(params)
+    const res = await getSessionPageAPI(params)
     tableData.value = res.records || []
     pagination.total = res.total || 0
   }

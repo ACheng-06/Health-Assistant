@@ -48,7 +48,7 @@
 </template>
 <script setup>
   import { ref, onMounted, reactive } from 'vue'
-  import { getCategoryAPI, getArticlePageAPI, getArticleDetailAPI, changeArticleStatusAPI, deleteArticleAPI } from '@/api/admin'
+  import { getCategoryTreeAPI, getArticlePageAPI, getArticleDetailAPI, changeArticleStatusAPI, deleteArticleAPI } from '@/api/knowledge'
   import PageHead from '@/views/backend/PageHead.vue'
   import TableSearch from '@/views/backend/TableSearch.vue'
   import ArticleDialog from '@/views/backend/knowledge/ArticleDialog.vue'
@@ -181,7 +181,7 @@
   }
 
   onMounted(async () => {
-    const data = await getCategoryAPI()
+    const data = await getCategoryTreeAPI()
     categories.value = data.map(item => ({
       label: item.categoryName,
       value: item.id

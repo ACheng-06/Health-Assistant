@@ -114,7 +114,7 @@
   </div>
 </template>
 <script setup>
-  import { getAnalyticsOverviewAPI } from '@/api/admin'
+  import { getAnalyticsOverviewAPI } from '@/api/analytics'
   import { onMounted, ref, nextTick } from 'vue'
   import * as echarts from 'echarts'
 

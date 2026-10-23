@@ -2,9 +2,10 @@ import axios from 'axios'
 import { ElMessage } from 'element-plus'
 import router from '@/router'
 import { clearAuthStorage } from '@/utils/auth'
+import { apiBaseUrl } from '@/config'
 
 const service = axios.create({
-  baseURL: '/api',
+  baseURL: apiBaseUrl,
   timeout: 5000
 })
 
@@ -25,36 +26,54 @@ service.interceptors.request.use(
   }
 )
 
+const isLoginRequest = (url = '') => url.includes('/login')
+
+const handleTokenExpired = (msg) => {
+    clearAuthStorage()
+    ElMessage.error(msg || '登录过期，请重新登录')
+    router.push('/auth/login')
+}
+
 //响应拦截器
 service.interceptors.response.use(
-  response => {
+    response => {
         const { data, config } = response
         // 1. 处理业务成功状态码 (兼容数字和字符串)
         if (data.code === 200 || data.code === '200') {
             return data.data // 直接返回核心数据，简化前端处理
-        } else {
-            // 2. 处理登录过期
-            // 只有 code 为 401，或者 code 为 -1 且包含“登录”字样时才判定为过期
-            const isTokenExpired = data.code === 401 || data.code === '401' || (data.code === '-1' && data.msg?.includes('登录'))
-
-            if (isTokenExpired) {
-                if (!config.url?.includes('/login')) {
-                    ElMessage.error(data.msg || '登录过期，请重新登录')
-                    clearAuthStorage()
-                    router.push('/auth/login')
-                }
-                return Promise.reject('Token Expired')
-            } else {
-                // 3. 普通业务错误只弹窗，不踢人
-                ElMessage.error(data.msg || '系统错误')
-                return Promise.reject(data.msg || 'error')
-            }
         }
+
+        // 2. 处理登录过期：业务错误统一在这里提示，页面内不要重复弹窗
+        const isTokenExpired = data.code === 401 || data.code === '401' || (data.code === '-1' && data.msg?.includes('登录'))
+
+        if (isTokenExpired) {
+            if (!isLoginRequest(config.url)) {
+                handleTokenExpired(data.msg)
+            }
+            return Promise.reject(new Error(data.msg || '登录已过期'))
+        }
+
+        // 3. 普通业务错误只弹窗，不踢人
+        ElMessage.error(data.msg || '系统错误')
+        return Promise.reject(new Error(data.msg || '系统错误'))
     },
     (error) => {
-        ElMessage.error('网络请求失败')
+        const status = error.response?.status
+        const serverMsg = error.response?.data?.msg || error.response?.data?.message
+
+        // HTTP 层 401 同样按登录过期处理
+        if (status === 401 && !isLoginRequest(error.config?.url)) {
+            handleTokenExpired(serverMsg)
+            return Promise.reject(error)
+        }
+
+        if (error.code === 'ECONNABORTED') {
+            ElMessage.error('请求超时，请稍后重试')
+        } else {
+            ElMessage.error(serverMsg || '网络请求失败')
+        }
         return Promise.reject(error)
-    }    
+    }
 )
 
 export default service

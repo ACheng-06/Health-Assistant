@@ -37,7 +37,7 @@
   import { ref, reactive } from 'vue'
   import { ElMessage } from 'element-plus'
   import router from '@/router'
-  import { getLoginAPI } from '@/api/admin'
+  import { loginAPI } from '@/api/auth'
   import { useAuthStore } from '@/store/auth'
 
   const authStore = useAuthStore()
@@ -53,7 +53,7 @@
     const valid = await formEl.validate().catch(() => false)
     if (!valid) return
     try {
-      const actualData = await getLoginAPI(formData)
+      const actualData = await loginAPI(formData)
       if (!actualData?.token) {
         ElMessage.error('登录失败，未获取到登录凭证')
         return

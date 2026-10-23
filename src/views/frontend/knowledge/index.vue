@@ -67,7 +67,8 @@
 </template>
 <script setup>
   import { ref, onMounted, reactive } from 'vue'
-  import { getKnowledgeListAPI } from '@/api/frontend'
+  import { getArticlePageAPI } from '@/api/knowledge'
+  import { fileBaseUrl } from '@/config'
   import { dayjs } from 'element-plus'
   import { useRouter } from 'vue-router'
   import { Histogram, Avatar, List, Platform } from '@element-plus/icons-vue'
@@ -98,7 +99,7 @@
       sortDirection: 'desc',
       ...pagination,
     }
-    getKnowledgeListAPI(params).then(res => {
+    getArticlePageAPI(params).then(res => {
       articleList.value = res.records
       pagination.total = res.total
     })
@@ -106,7 +107,8 @@
 
   //获取封面图片
   const getImage = (url) => {
-    return url ? 'http://159.75.169.224:1235' + url : 'https://file.itndedu.com/psychology_ai.png'
+    if (!url) return 'https://file.itndedu.com/psychology_ai.png'
+    return url.startsWith('http') ? url : `${fileBaseUrl}${url}`
   }
 
   const handleChange = (page) => {
@@ -129,7 +131,7 @@
       size: 5
     }
     getPageList()
-    getKnowledgeListAPI(params).then(res => {
+    getArticlePageAPI(params).then(res => {
       recommendList.value = res.records
     })
   })

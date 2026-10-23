@@ -126,7 +126,7 @@
 </template>
 <script setup>
   import { ref, reactive, onMounted } from 'vue'
-  import { getEmotionalPageAPI, deleteEmotionalAPI } from '@/api/admin'
+  import { getEmotionDiaryPageAPI, deleteEmotionDiaryAPI } from '@/api/emotion'
   import { ElMessage, ElMessageBox } from 'element-plus'
   import pageHead from '@/views/backend/PageHead.vue'
   import TableSearch from '@/views/backend/TableSearch.vue'
@@ -225,7 +225,7 @@
     }
 
     try {
-      const res = await getEmotionalPageAPI(params)
+      const res = await getEmotionDiaryPageAPI(params)
       tableData.value = res.records || []
       pagination.total = res.total || 0
     } catch (error) {
@@ -246,7 +246,7 @@
         type: 'warning'
       })
 
-      await deleteEmotionalAPI(row.id)
+      await deleteEmotionDiaryAPI(row.id)
       ElMessage.success('删除成功')
       handleSearch({})
     } catch (error) {

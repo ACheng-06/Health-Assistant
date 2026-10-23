@@ -82,7 +82,7 @@
 <script setup>
   import { ref, watch } from 'vue'
   import { useRoute, useRouter } from 'vue-router' // 
-  import { getKnowledgeDetailAPI } from '@/api/frontend'
+  import { getArticleDetailAPI } from '@/api/knowledge'
   import { dayjs } from 'element-plus'
   import { sanitizeHtml } from '@/utils/sanitize'
 
@@ -110,7 +110,7 @@
   const loadArticle = async (articleId) => {
     if (!articleId) return
     try {
-      const res = await getKnowledgeDetailAPI(articleId)
+      const res = await getArticleDetailAPI(articleId)
 
       if (res.tags && typeof res.tags === 'string') {
         res.tagArray = res.tags.split(',')
