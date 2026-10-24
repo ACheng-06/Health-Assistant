@@ -201,7 +201,10 @@
 
     <section class="cta-section">
       <div class="fe-container cta-inner">
-        <div v-reveal>
+        <div class="cta-grid" aria-hidden="true"></div>
+        <div class="cta-aura" aria-hidden="true"></div>
+
+        <div v-reveal class="cta-copy">
           <p class="cta-kicker">给心一个被听见的机会</p>
           <h2>准备好了吗？</h2>
           <p>立即注册，免费开始你的心灵对话</p>
@@ -1160,6 +1163,7 @@ onBeforeUnmount(() => {
 }
 
 .cta-inner {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -1186,11 +1190,52 @@ onBeforeUnmount(() => {
   }
 
   .cta-kicker {
+    display: inline-flex;
+    align-items: center;
+    gap: 10px;
     color: rgba(255, 255, 255, 0.72);
     font-size: 12px;
     font-weight: 700;
     letter-spacing: 0.1em;
+
+    &::before {
+      content: '';
+      width: 22px;
+      height: 1px;
+      background: currentColor;
+      opacity: 0.8;
+    }
   }
+}
+
+/* 与各页页头同一套网格纹理 + 柔光，避免底部卡片看起来像另一个人做的 */
+.cta-grid {
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.08) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.08) 1px, transparent 1px);
+  background-size: 52px 52px;
+  -webkit-mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent 88%);
+  mask-image: linear-gradient(180deg, rgba(0, 0, 0, 0.9), transparent 88%);
+  pointer-events: none;
+}
+
+.cta-aura {
+  position: absolute;
+  top: -55%;
+  right: -8%;
+  width: min(46vw, 520px);
+  aspect-ratio: 1;
+  border-radius: 50%;
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.2), transparent 62%);
+  pointer-events: none;
+}
+
+.cta-copy,
+.cta-actions {
+  position: relative;
+  z-index: 1;
 }
 
 .cta-actions {
