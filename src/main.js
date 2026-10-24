@@ -2,7 +2,9 @@ import { createApp } from 'vue'
 import router from './router'
 import App from './App.vue'
 import './style.css'
+import './styles/theme.css'
 import { createPinia } from 'pinia'
+import reveal from './directives/reveal'
 import { ElLoading } from 'element-plus/es/components/loading/index.mjs'
 // Element Plus 组件由 unplugin-vue-components 按需引入；
 // 通过 JS 调用的 Message / MessageBox / Loading 指令需手动注册并引入样式
@@ -15,4 +17,5 @@ const app = createApp(App)
 app.use(ElLoading)
 app.use(router)
 app.use(createPinia())
+app.directive('reveal', reveal)
 app.mount('#app')

@@ -1,0 +1,182 @@
+:root {
+  --fe-nav-h: 70px;
+  --fe-ease-out: cubic-bezier(0.16, 1, 0.3, 1);
+  --fe-ease-soft: cubic-bezier(0.22, 1, 0.36, 1);
+  /* 带轻微回弹的缓动，用于入场位移，避免“滑上去就没劲了” */
+  --fe-ease-spring: cubic-bezier(0.2, 1.14, 0.3, 1);
+}
+
+body.fe-theme {
+  /* 品牌：沿用现有青绿主色 + 紫蓝副色 */
+  --fe-brand: #2ebf91;
+  --fe-brand-deep: #059669;
+  --fe-brand-soft: #ecfdf5;
+  --fe-brand-ring: rgba(46, 191, 145, 0.28);
+  --fe-accent: #8192f2;
+  --fe-accent-deep: #5c6bc0;
+  --fe-grad-brand: linear-gradient(135deg, #8360c3, #2ebf91);
+  --fe-grad-accent: linear-gradient(135deg, #8192f2, #5c6bc0);
+  --fe-grad-soft: linear-gradient(135deg, rgba(131, 96, 195, 0.10), rgba(46, 191, 145, 0.10));
+
+  /* 层次 */
+  --fe-bg: #f4f8f7;
+  --fe-surface: #ffffff;
+  --fe-surface-2: #fbfdfc;
+  --fe-border: #e3ebe8;
+  --fe-border-strong: #d3ded9;
+
+  /* 文字 */
+  --fe-text: #1f2a26;
+  --fe-text-soft: #4b5b55;
+  --fe-text-muted: #8a9a94;
+  --fe-text-faint: #aab7b1;
+
+  /* 尺寸 */
+  --fe-radius-sm: 10px;
+  --fe-radius-md: 14px;
+  --fe-radius-lg: 20px;
+  --fe-radius-pill: 999px;
+  --fe-container: 1100px;
+
+  /* 阴影：浅色底一律用大扩散 + 低透明度 */
+  --fe-shadow-sm: 0 2px 8px rgba(31, 42, 38, 0.05);
+  --fe-shadow-md: 0 10px 30px rgba(31, 42, 38, 0.08);
+  --fe-shadow-lg: 0 20px 50px rgba(31, 42, 38, 0.10);
+  --fe-shadow-brand: 0 10px 26px rgba(46, 191, 145, 0.22);
+
+  /* Element Plus 品牌对齐；浮层挂到 body 后仍可继承 */
+  --el-color-primary: #2ebf91;
+  --el-color-primary-light-3: #58cfab;
+  --el-color-primary-light-5: #86dcc2;
+  --el-color-primary-light-7: rgba(46, 191, 145, 0.35);
+  --el-color-primary-light-8: rgba(46, 191, 145, 0.20);
+  --el-color-primary-light-9: rgba(46, 191, 145, 0.10);
+  --el-color-primary-dark-2: #259c76;
+  --el-border-radius-base: 10px;
+  --el-border-radius-small: 8px;
+  --el-text-color-primary: #1f2a26;
+  --el-text-color-regular: #4b5b55;
+  --el-text-color-secondary: #8a9a94;
+}
+
+body.fe-noscroll {
+  overflow: hidden;
+}
+
+.fe-container {
+  width: 100%;
+  max-width: var(--fe-container);
+  margin: 0 auto;
+  padding: 0 24px;
+  box-sizing: border-box;
+}
+
+.fe-section {
+  padding: clamp(56px, 7vw, 88px) 0;
+}
+
+.fe-section-title {
+  font-size: clamp(1.6rem, 3.2vw, 2.25rem);
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  color: var(--fe-text);
+}
+
+.fe-section-sub {
+  font-size: 1rem;
+  color: var(--fe-text-muted);
+  line-height: 1.75;
+}
+
+/* 入场动效：位移 + 轻微缩放 + 失焦，三者叠加才有“弹出来”的分量感 */
+.reveal {
+  opacity: 0;
+  transform: translate3d(0, 46px, 0) scale(0.985);
+  filter: blur(7px);
+  transition:
+    opacity 0.58s var(--fe-ease-out),
+    transform 0.92s var(--fe-ease-spring),
+    filter 0.58s var(--fe-ease-out);
+  transition-delay: calc(var(--stagger, 0) * 100ms);
+  will-change: opacity, transform;
+}
+
+.reveal-up {
+  transform: translate3d(0, 46px, 0) scale(0.985);
+}
+
+.reveal-left {
+  transform: translate3d(-52px, 0, 0);
+}
+
+.reveal-right {
+  transform: translate3d(52px, 0, 0);
+}
+
+.reveal-zoom {
+  transform: scale(0.9);
+}
+
+.reveal.is-visible {
+  opacity: 1;
+  transform: none;
+  filter: none;
+  will-change: auto;
+}
+
+.page-fade-enter-active,
+.page-fade-leave-active {
+  transition:
+    opacity 0.26s var(--fe-ease-out),
+    transform 0.26s var(--fe-ease-out);
+}
+
+.page-fade-enter-from {
+  opacity: 0;
+  transform: translateY(12px);
+}
+
+.page-fade-leave-to {
+  opacity: 0;
+  transform: translateY(-8px);
+}
+
+.route-page-shell.page-fade-leave-active {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: 0;
+  z-index: 1;
+  pointer-events: none;
+}
+
+.route-page-shell.page-fade-enter-active {
+  position: relative;
+  z-index: 2;
+}
+
+@keyframes fe-fade-up {
+  from {
+    opacity: 0;
+    transform: translateY(24px);
+  }
+
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .reveal {
+    opacity: 1;
+    transform: none;
+    filter: none;
+    transition: none;
+  }
+
+  .page-fade-enter-active,
+  .page-fade-leave-active {
+    transition: none;
+  }
+}
