@@ -78,7 +78,7 @@
 </template>
 
 <script setup>
-import { computed, onBeforeUnmount, onMounted } from 'vue'
+import { computed, onBeforeUnmount } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { logoutAPI } from '@/api/auth'
 import { useAuthStore } from '@/store/auth'
@@ -135,12 +135,9 @@ const handleLogout = async () => {
   }
 }
 
-onMounted(() => {
-  document.body.classList.add('fe-theme')
-})
-
+// 主题类已在 main.js 统一挂到 body，这里只负责清理进入咨询页时加的滚动锁
 onBeforeUnmount(() => {
-  document.body.classList.remove('fe-theme', 'fe-noscroll')
+  document.body.classList.remove('fe-noscroll')
 })
 </script>
 

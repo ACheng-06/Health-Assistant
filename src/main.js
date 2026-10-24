@@ -13,6 +13,8 @@ import 'element-plus/es/components/message-box/style/css'
 import 'element-plus/es/components/loading/style/css'
 
 const app = createApp(App)
+// 设计令牌挂在 body.fe-theme 上，这里统一挂载：前台、认证页与后台共用同一套变量
+document.body.classList.add('fe-theme')
 // 注册 v-loading 指令，并保留全局 $loading 服务
 app.use(ElLoading)
 app.use(router)

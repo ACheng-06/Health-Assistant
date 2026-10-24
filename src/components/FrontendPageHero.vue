@@ -89,9 +89,9 @@ defineProps({
   }
 }
 
-/* 与下方内容栏保持一致：默认 1100，宽版 1280 */
+/* 与下方内容栏保持一致：默认 1100，宽版用令牌里的 1280 */
 .page-hero.is-wide .hero-inner {
-  --fe-container: 1280px;
+  --fe-container: var(--fe-container-wide);
 }
 
 .hero-copy {

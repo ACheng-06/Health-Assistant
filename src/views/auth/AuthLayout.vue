@@ -34,26 +34,22 @@
         <span>心理健康AI助手</span>
       </div>
       <div class="form-slot">
-        <router-view />
+        <router-view v-slot="{ Component }">
+          <transition name="page-fade" mode="out-in">
+            <component :is="Component" :key="route.fullPath" />
+          </transition>
+        </router-view>
       </div>
     </main>
   </div>
 </template>
 
 <script setup>
-import { onBeforeUnmount, onMounted } from 'vue'
+import { useRoute } from 'vue-router'
 
+const route = useRoute()
 const logoUrl = new URL('@/assets/images/机器人.png', import.meta.url).href
 const robotUrl = new URL('@/assets/images/robot-fill.png', import.meta.url).href
-
-// 登录/注册页独立于前台布局，需要自己挂上主题类，表单控件才会跟随品牌色
-onMounted(() => {
-  document.body.classList.add('fe-theme')
-})
-
-onBeforeUnmount(() => {
-  document.body.classList.remove('fe-theme')
-})
 </script>
 
 <style lang="scss" scoped>

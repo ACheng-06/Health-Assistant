@@ -7,25 +7,12 @@
       <h1>这一页走丢了</h1>
       <p class="nf-text">可能链接过期了，也可能我们把它收起来了。<br />回首页看看，或者直接找我们聊聊。</p>
       <div class="nf-actions">
-        <router-link to="/" class="nf-btn nf-primary">回到首页</router-link>
-        <router-link to="/consultation" class="nf-btn nf-ghost">去聊聊</router-link>
+        <router-link to="/" class="fe-btn fe-btn-primary">回到首页</router-link>
+        <router-link to="/consultation" class="fe-btn fe-btn-ghost">去聊聊</router-link>
       </div>
     </div>
   </div>
 </template>
-
-<script setup>
-import { onBeforeUnmount, onMounted } from 'vue'
-
-// 404 页面独立于前台布局，需要自己挂上主题类才能用到品牌令牌
-onMounted(() => {
-  document.body.classList.add('fe-theme')
-})
-
-onBeforeUnmount(() => {
-  document.body.classList.remove('fe-theme')
-})
-</script>
 
 <style scoped lang="scss">
 .not-found {
@@ -98,57 +85,11 @@ onBeforeUnmount(() => {
   margin-top: 28px;
 }
 
-.nf-btn {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  min-height: 44px;
-  padding: 0 22px;
-  border: 1px solid transparent;
-  border-radius: var(--fe-radius-md);
-  font-size: 14px;
-  font-weight: 600;
-  transition:
-    transform 0.2s var(--fe-ease-out),
-    background-color 0.2s ease,
-    border-color 0.2s ease;
-
-  &:hover {
-    transform: translateY(-2px);
-  }
-
-  &:focus-visible {
-    outline: none;
-    box-shadow: 0 0 0 3px var(--fe-brand-ring);
-  }
-}
-
-.nf-primary {
-  background: var(--fe-brand);
-  color: #fff;
-  box-shadow: var(--fe-shadow-brand);
-
-  &:hover {
-    background: var(--fe-brand-deep);
-  }
-}
-
-.nf-ghost {
-  border-color: var(--fe-border-strong);
-  background: var(--fe-surface);
-  color: var(--fe-text-soft);
-
-  &:hover {
-    border-color: var(--fe-brand);
-    color: var(--fe-brand-deep);
-  }
-}
-
 @media (max-width: 480px) {
   .nf-actions {
     flex-direction: column;
 
-    .nf-btn {
+    .fe-btn {
       width: 100%;
     }
   }

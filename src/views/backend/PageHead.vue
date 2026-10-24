@@ -24,8 +24,11 @@
   justify-content: space-between;
 
   .page-title {
-    font-size: 24px;
-    color: #2d3748;
+    margin: 0;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--fe-text);
   }
 }
 </style>

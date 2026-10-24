@@ -485,20 +485,20 @@
     .info {
       .title {
         font-size: 14px;
-        color: #7f8c8d;
+        color: var(--fe-text-muted);
         margin-bottom: 4px;
       }
 
       .value {
         font-size: 24px;
         font-weight: 700;
-        color: #2c3e50;
+        color: var(--fe-text);
         margin-bottom: 4px
       }
 
       .subtitle-title {
         font-size: 12px;
-        color: #95a5a6;
+        color: var(--fe-text-faint);
       }
     }
   }
@@ -523,14 +523,14 @@
 
         .stat-label {
           font-size: 12px;
-          color: #7f8c8d;
+          color: var(--fe-text-muted);
           margin-bottom: 4px;
         }
 
         .stat-value {
           font-size: 18px;
           font-weight: 600;
-          color: #2c3e50;
+          color: var(--fe-text);
         }
       }
     }

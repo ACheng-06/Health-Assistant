@@ -108,7 +108,7 @@
               </ul>
             </div>
           </div>
-          <div v-else style="color: #909399; padding: 16px; text-align: center;">暂无AI分析结果</div>
+          <div v-else style="color: var(--fe-text-muted); padding: 16px; text-align: center;">暂无AI分析结果</div>
         </div>
         <div class="detail-section">
           <h4>时间信息</h4>
@@ -283,12 +283,12 @@
 
     h4 {
       margin: 0 0 16px 0;
-      color: #303133;
+      color: var(--fe-text);
       font-size: 16px;
 
       i {
         margin-right: 8px;
-        color: #409eff;
+        color: var(--fe-brand);
       }
     }
   }
@@ -306,7 +306,7 @@
 
   .ai-analysis-preview {
     font-size: 11px;
-    color: #909399;
+    color: var(--fe-text-muted);
     margin-top: 2px;
   }
 }
@@ -319,18 +319,18 @@
   .ai-improvements-section {
     margin-top: 16px;
     padding: 12px;
-    background-color: #f8f9fa;
+    background-color: var(--fe-surface-2);
     border-radius: 4px;
 
     h5 {
       margin: 0 0 8px 0;
-      color: #606266;
+      color: var(--fe-text-soft);
       font-size: 14px;
       font-weight: 600;
 
       i {
         margin-right: 6px;
-        color: #909399;
+        color: var(--fe-text-muted);
       }
     }
   }
@@ -341,20 +341,20 @@
     gap: 6px;
 
     .keyword-tag {
-      background-color: #e1f3d8;
-      color: #67c23a;
-      border-color: #b3d8a4;
+      background-color: var(--fe-brand-soft);
+      color: var(--fe-brand-deep);
+      border-color: var(--fe-brand);
     }
   }
 
   .suggestion-content,
   .risk-content {
     line-height: 1.6;
-    color: #606266;
-    background-color: white;
+    color: var(--fe-text-soft);
+    background-color: var(--fe-surface);
     padding: 8px;
     border-radius: 4px;
-    border: 1px solid #ebeef5;
+    border: 1px solid var(--fe-border);
   }
 
   .improvement-list {
@@ -363,7 +363,7 @@
 
     li {
       margin-bottom: 4px;
-      color: #606266;
+      color: var(--fe-text-soft);
       line-height: 1.5;
     }
   }
@@ -371,12 +371,12 @@
   .ai-analysis-meta {
     margin-top: 16px;
     padding-top: 12px;
-    border-top: 1px solid #ebeef5;
+    border-top: 1px solid var(--fe-border);
 
     .analysis-time {
       margin: 0;
       font-size: 12px;
-      color: #909399;
+      color: var(--fe-text-muted);
 
       i {
         margin-right: 4px;

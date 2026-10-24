@@ -213,8 +213,8 @@ onMounted(async () => {
 }
 
 .knowledge-layout {
-  /* 列表页信息密度高，容器单独放宽到 1280 */
-  --fe-container: 1280px;
+  /* 列表页信息密度高，容器单独放宽一档 */
+  --fe-container: var(--fe-container-wide);
   display: grid;
   grid-template-columns: 300px minmax(0, 1fr);
   gap: clamp(20px, 2.6vw, 32px);

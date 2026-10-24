@@ -133,13 +133,13 @@
 //让文字居中显示
 .session-title {
   font-weight: 500;
-  color: #333;
+  color: var(--fe-text);
   margin-bottom: 4px;
 }
 
 .session-preview {
   font-size: 13px;
-  color: #666;
+  color: var(--fe-text-muted);
   margin-bottom: 4px;
   display: -webkit-box;
   -webkit-line-clamp: 2;
@@ -155,9 +155,9 @@
   .detail-header {
     margin-bottom: 20px;
     padding: 16px;
-    background: #f8f9fa;
-    border-radius: 8px;
-    border: 1px solid #e9ecef;
+    background: var(--fe-surface-2);
+    border-radius: var(--fe-radius-sm);
+    border: 1px solid var(--fe-border);
   }
 
   .detail-row {
@@ -171,13 +171,13 @@
 
     .detail-label {
       font-weight: 500;
-      color: #495057;
+      color: var(--fe-text-soft);
       min-width: 80px;
       margin-right: 8px;
     }
 
     .detail-value {
-      color: #333;
+      color: var(--fe-text);
     }
   }
 }
@@ -190,7 +190,7 @@
 
     h4 {
       margin: 0;
-      color: #333;
+      color: var(--fe-text);
       font-size: 16px;
       font-weight: 500;
     }
@@ -199,28 +199,28 @@
   .messages-list {
     max-height: 400px;
     overflow-y: auto;
-    border: 1px solid #e9ecef;
-    border-radius: 8px;
+    border: 1px solid var(--fe-border);
+    border-radius: var(--fe-radius-sm);
     padding: 16px;
-    background: #fff;
+    background: var(--fe-surface);
 
     .message-item {
       margin-bottom: 12px;
       padding: 12px;
-      border-radius: 8px;
-      background: #f8f9fa;
-      border: 1px solid #e9ecef;
+      border-radius: var(--fe-radius-sm);
+      background: var(--fe-surface-2);
+      border: 1px solid var(--fe-border);
 
       &:last-child {
         margin-bottom: 0;
       }
 
       &.user-message {
-        background: #e8f4fd;
+        background: var(--fe-info-soft);
       }
 
       &.ai-message {
-        background: #f0f9f0;
+        background: var(--fe-brand-soft);
       }
 
       .message-header {
@@ -231,7 +231,7 @@
 
         .sender {
           font-weight: 500;
-          color: #333;
+          color: var(--fe-text);
           display: flex;
           align-items: center;
           gap: 4px;
@@ -239,13 +239,13 @@
 
         .time {
           font-size: 12px;
-          color: #999;
+          color: var(--fe-text-faint);
         }
       }
 
       /* 修复：将 message-content 移到 message-item 下，与 message-header 平级 */
       .message-content {
-        color: #333;
+        color: var(--fe-text);
         line-height: 1.6;
         white-space: pre-wrap;
         margin-top: 8px;

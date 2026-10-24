@@ -11,7 +11,7 @@
     <aside class="chat-sidebar" aria-label="会话与情绪侧栏">
       <div class="sb-brand">
         <div class="sb-brand-lockup">
-          <img :src="iconUrl1" alt="" />
+          <img :src="brandMarkUrl" alt="" />
           <span>心理健康AI助手</span>
         </div>
         <button
@@ -261,6 +261,8 @@ const authStore = useAuthStore()
 
 const iconUrl1 = new URL('@/assets/images/robot-fill.png', import.meta.url).href
 const iconUrl2 = new URL('@/assets/images/users.png', import.meta.url).href
+// 侧栏品牌区在白底上，用带颜色的品牌图标；白色描边图标会与背景重合
+const brandMarkUrl = new URL('@/assets/images/机器人.png', import.meta.url).href
 
 const currentSession = ref(null)
 const sessionList = ref([])
@@ -1101,7 +1103,7 @@ onMounted(() => {
   border: 0;
   border-radius: 8px;
   background: transparent;
-  color: #dc2626;
+  color: var(--fe-danger);
   opacity: 0;
   cursor: pointer;
   transform: translateY(-50%);
@@ -1120,13 +1122,13 @@ onMounted(() => {
   }
 
   &:hover {
-    background: #fef2f2;
+    background: var(--fe-danger-soft);
   }
 
   &:focus-visible {
     opacity: 1;
     outline: none;
-    box-shadow: 0 0 0 3px rgba(220, 38, 38, 0.18);
+    box-shadow: 0 0 0 3px var(--fe-danger-ring);
   }
 }
 
@@ -1201,7 +1203,7 @@ onMounted(() => {
   }
 
   span.concern {
-    color: #dc2626;
+    color: var(--fe-danger);
   }
 }
 
@@ -1223,8 +1225,8 @@ onMounted(() => {
 
   /* 底色跟随情绪状态变化：分数低告急、分数高平稳 */
   &.is-good {
-    background-image: linear-gradient(135deg, #10b981, #047857);
-    box-shadow: 0 6px 16px rgba(4, 120, 87, 0.3);
+    background-image: var(--fe-grad-good);
+    box-shadow: var(--fe-shadow-good);
   }
 
   &.is-watch {
@@ -1233,13 +1235,13 @@ onMounted(() => {
   }
 
   &.is-warn {
-    background-image: linear-gradient(135deg, #f59e0b, #b45309);
-    box-shadow: 0 6px 16px rgba(180, 83, 9, 0.32);
+    background-image: var(--fe-grad-warn);
+    box-shadow: var(--fe-shadow-warn);
   }
 
   &.is-crisis {
-    background-image: linear-gradient(135deg, #ef4444, #b91c1c);
-    box-shadow: 0 6px 16px rgba(185, 28, 28, 0.34);
+    background-image: var(--fe-grad-crisis);
+    box-shadow: var(--fe-shadow-crisis);
   }
 }
 
@@ -1271,7 +1273,7 @@ onMounted(() => {
 
 /* 强度小圆点跟徽标同色，避免一红一绿 */
 .sb-emotion.is-good .dot.active {
-  background: #047857;
+  background: var(--fe-success-deep);
 }
 
 .sb-emotion.is-watch .dot.active {
@@ -1279,11 +1281,11 @@ onMounted(() => {
 }
 
 .sb-emotion.is-warn .dot.active {
-  background: #b45309;
+  background: var(--fe-warn-deep);
 }
 
 .sb-emotion.is-crisis .dot.active {
-  background: #b91c1c;
+  background: var(--fe-danger-deep);
 }
 
 .emotion-suggestion {
@@ -1324,8 +1326,8 @@ onMounted(() => {
   margin-top: 10px;
   padding: 9px 10px;
   border-radius: 8px;
-  background: #fef2f2;
-  color: #dc2626;
+  background: var(--fe-danger-soft);
+  color: var(--fe-danger);
   font-size: 10px;
   line-height: 1.5;
 
@@ -1468,10 +1470,10 @@ onMounted(() => {
   display: grid;
   place-items: center;
   margin: 0 auto 22px;
-  border: 1px solid var(--fe-border);
   border-radius: 26px;
-  background: var(--fe-grad-soft);
-  box-shadow: var(--fe-shadow-md);
+  /* 素材是白色描边图标，必须垫一层品牌色才看得见 */
+  background: var(--fe-grad-brand);
+  box-shadow: var(--fe-shadow-brand);
 
   img {
     width: 58px;
@@ -1557,21 +1559,22 @@ onMounted(() => {
   display: grid;
   place-items: center;
   flex-shrink: 0;
-  overflow: hidden;
-  border: 1px solid var(--fe-border);
   border-radius: 10px;
-  background: var(--fe-surface);
+  /* 头像素材是白色描边图标，下面垫品牌色才能与白底区分 */
+  background-image: var(--fe-grad-brand);
+  box-shadow: 0 4px 10px rgba(46, 191, 145, 0.22);
 
   img {
-    width: 100%;
-    height: 100%;
-    object-fit: cover;
+    width: 74%;
+    height: 74%;
+    object-fit: contain;
   }
 }
 
-.row-ai .msg-avatar img {
-  object-fit: contain;
-  transform: scale(0.88);
+/* 用户侧换成副色，一眼分得清谁在说话 */
+.row-user .msg-avatar {
+  background-image: var(--fe-grad-accent);
+  box-shadow: 0 4px 10px rgba(92, 107, 192, 0.22);
 }
 
 .row-user {
@@ -1618,16 +1621,16 @@ onMounted(() => {
 }
 
 .error-bubble {
-  border-color: rgba(220, 38, 38, 0.18);
-  background: #fef2f2;
-  color: #dc2626;
+  border-color: var(--fe-danger-ring);
+  background: var(--fe-danger-soft);
+  color: var(--fe-danger);
 }
 
 .error-message {
   display: flex;
   align-items: flex-start;
   gap: 8px;
-  color: #dc2626;
+  color: var(--fe-danger);
 
   svg {
     width: 18px;
@@ -1783,7 +1786,7 @@ onMounted(() => {
   font-size: 10px;
 
   .warn {
-    color: #dc2626;
+    color: var(--fe-danger);
   }
 }
 

@@ -66,9 +66,9 @@
   align-items: center;
   justify-content: space-between;
   padding: 0 15px;
-  background: white;
-  box-shadow: 0 1px 4px rgba(0, 21, 41, 0.08);
-  border-bottom: 1px solid #e5e7eb;
+  background: var(--fe-surface);
+  box-shadow: var(--fe-shadow-sm);
+  border-bottom: 1px solid var(--fe-border);
 
   .flex-box {
     display: flex;
@@ -77,10 +77,17 @@
   }
 
   .page-title {
-    margin-left: 20px;
-    font-size: 26px;
-    font-weight: bold;
-    color: #1f2937;
+    margin: 0 0 0 16px;
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+    color: var(--fe-text);
+  }
+
+  .user-name {
+    margin: 0 6px 0 0;
+    color: var(--fe-text-soft);
+    font-size: 14px;
   }
 }
 </style>

@@ -37,12 +37,33 @@ body.fe-theme {
   --fe-radius-lg: 20px;
   --fe-radius-pill: 999px;
   --fe-container: 1100px;
+  /* 内容偏多的页面（知识库等）用加宽档 */
+  --fe-container-wide: 1280px;
 
   /* 阴影：浅色底一律用大扩散 + 低透明度 */
   --fe-shadow-sm: 0 2px 8px rgba(31, 42, 38, 0.05);
   --fe-shadow-md: 0 10px 30px rgba(31, 42, 38, 0.08);
   --fe-shadow-lg: 0 20px 50px rgba(31, 42, 38, 0.10);
   --fe-shadow-brand: 0 10px 26px rgba(46, 191, 145, 0.22);
+
+  /* 状态语义色：组件里不再自写十六进制，改从这四个档位取 */
+  --fe-success: #10b981;
+  --fe-success-deep: #047857;
+  --fe-success-soft: #ecfdf5;
+  --fe-warn: #f59e0b;
+  --fe-warn-deep: #b45309;
+  --fe-warn-soft: #fffbeb;
+  --fe-danger: #dc2626;
+  --fe-danger-deep: #b91c1c;
+  --fe-danger-soft: #fef2f2;
+  --fe-danger-ring: rgba(220, 38, 38, 0.18);
+  --fe-info-soft: #e8f4fd;
+  --fe-grad-good: linear-gradient(135deg, #10b981, #047857);
+  --fe-grad-warn: linear-gradient(135deg, #f59e0b, #b45309);
+  --fe-grad-crisis: linear-gradient(135deg, #ef4444, #b91c1c);
+  --fe-shadow-good: 0 6px 16px rgba(4, 120, 87, 0.3);
+  --fe-shadow-warn: 0 6px 16px rgba(180, 83, 9, 0.32);
+  --fe-shadow-crisis: 0 6px 16px rgba(185, 28, 28, 0.34);
 
   /* Element Plus 品牌对齐；浮层挂到 body 后仍可继承 */
   --el-color-primary: #2ebf91;
@@ -63,12 +84,31 @@ body.fe-noscroll {
   overflow: hidden;
 }
 
+/* Element Plus 容器对齐令牌：后台卡片、表格与前台同一套边框与圆角 */
+body.fe-theme .el-card {
+  border-color: var(--fe-border);
+  border-radius: var(--fe-radius-md);
+}
+
+body.fe-theme .el-table {
+  --el-table-border-color: var(--fe-border);
+  --el-table-header-bg-color: var(--fe-surface-2);
+  --el-table-header-text-color: var(--fe-text-soft);
+  --el-table-text-color: var(--fe-text-soft);
+  --el-table-row-hover-bg-color: var(--fe-brand-soft);
+}
+
 .fe-container {
   width: 100%;
   max-width: var(--fe-container);
   margin: 0 auto;
   padding: 0 24px;
   box-sizing: border-box;
+}
+
+/* 与 .fe-container 叠加使用：<div class="fe-container fe-container-wide"> */
+.fe-container-wide {
+  max-width: var(--fe-container-wide);
 }
 
 .fe-section {
@@ -88,8 +128,68 @@ body.fe-noscroll {
   line-height: 1.75;
 }
 
+/* 按钮规格：前台页面里的原生 button / router-link 统一套这三个类，别再每页重写一套 */
+.fe-btn {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  min-height: 44px;
+  padding: 0 22px;
+  border: 1px solid transparent;
+  border-radius: var(--fe-radius-md);
+  background: transparent;
+  color: var(--fe-text-soft);
+  font: inherit;
+  font-size: 14px;
+  font-weight: 600;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    transform 0.2s var(--fe-ease-out),
+    background-color 0.2s ease,
+    border-color 0.2s ease,
+    color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+.fe-btn:hover {
+  transform: translateY(-2px);
+}
+
+.fe-btn:active {
+  transform: translateY(0);
+}
+
+.fe-btn-primary {
+  background: var(--fe-brand);
+  color: var(--fe-surface);
+  box-shadow: var(--fe-shadow-brand);
+}
+
+.fe-btn-primary:hover {
+  background: var(--fe-brand-deep);
+}
+
+.fe-btn-ghost {
+  border-color: var(--fe-border-strong);
+  background: var(--fe-surface);
+  color: var(--fe-text-soft);
+}
+
+.fe-btn-ghost:hover {
+  border-color: var(--fe-brand);
+  color: var(--fe-brand-deep);
+}
+
+.fe-btn-pill {
+  border-radius: var(--fe-radius-pill);
+}
+
 /* 入场动效：位移 + 轻微缩放 + 失焦，三者叠加才有“弹出来”的分量感 */
 .reveal {
+  /* 指令会在行内改写这个值，这里声明一个默认值供样式与静态检查使用 */
+  --stagger: 0;
   opacity: 0;
   transform: translate3d(0, 46px, 0) scale(0.985);
   filter: blur(7px);

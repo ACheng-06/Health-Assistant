@@ -7,7 +7,13 @@
           <NavBar />
         </el-header>
         <el-main class="main-content">
-          <router-view class="content-container" />
+          <router-view v-slot="{ Component }">
+            <transition name="page-fade">
+              <div class="route-page-shell" :key="route.fullPath">
+                <component :is="Component" />
+              </div>
+            </transition>
+          </router-view>
         </el-main>
       </el-container>
     </el-container>
@@ -15,8 +21,11 @@
 </template>
 
 <script setup>
+  import { useRoute } from 'vue-router'
   import SideBar from './SideBar.vue'
-  import NavBar from './NavBar.vue' 
+  import NavBar from './NavBar.vue'
+
+  const route = useRoute()
 </script>
 
 <style lang="scss" scoped>
@@ -25,16 +34,22 @@
 
   .el-header {
     height: 74px !important;
+    padding: 0;
   }
 
   .main-container {
     height: 100%;
+  }
 
-    .content-container {
-      padding: 20px;
-      background-color: #fff;
-      min-height: calc(100% - 74px);
-    }
+  /* 内容区跟前台同一套浅色层次，卡片和表格才是白的 */
+  .main-content {
+    position: relative;
+    padding: 20px;
+    background: var(--fe-surface-2);
+  }
+
+  .route-page-shell {
+    min-height: 100%;
   }
 }
 </style>

@@ -1056,7 +1056,8 @@ onBeforeUnmount(() => {
   display: grid;
   place-items: center;
   border-radius: 14px;
-  background: var(--fe-brand-soft);
+  /* 白色描边图标需放在有颜色的底上，否则与白色卡片重合 */
+  background: var(--fe-grad-brand);
 
   img {
     width: 29px;

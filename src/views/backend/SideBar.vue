@@ -49,28 +49,41 @@
 <style lang="scss" scoped>
 .menu-style {
   height: 100%;
+  /* Element Plus 菜单变量接到品牌令牌上，active / hover / 分隔线都跟着走 */
+  --el-menu-bg-color: var(--fe-surface);
+  --el-menu-text-color: var(--fe-text-soft);
+  --el-menu-active-color: var(--fe-brand-deep);
+  --el-menu-hover-bg-color: var(--fe-brand-soft);
+  --el-menu-border-color: var(--fe-border);
+  border-right: 1px solid var(--fe-border);
 
   .brand {
     display: flex;
     align-items: center;
     justify-content: center;
     padding: 10px;
-    background-color: #fff;
-    border-bottom: 1px solid #e5e7eb;
+    background-color: var(--fe-surface);
+    border-bottom: 1px solid var(--fe-border);
 
     .info-card {
       .brand-title {
         font-size: 20px;
         font-weight: bold;
         margin-bottom: 5px;
-        color: #1f2937;
+        color: var(--fe-text);
       }
 
       .brand-subtitle {
         font-size: 14px;
-        color: #6b7280;
+        color: var(--fe-text-muted);
       }
     }
+  }
+
+  /* 当前菜单项加一层品牌底色，扫一眼就知道在哪页 */
+  :deep(.el-menu-item.is-active) {
+    background: var(--fe-brand-soft);
+    font-weight: 600;
   }
 }
 </style>
