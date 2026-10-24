@@ -1,4 +1,5 @@
 import axios from 'axios'
+import * as Sentry from '@sentry/vue'
 import { ElMessage } from 'element-plus/es/components/message/index.mjs'
 import router from '@/router'
 import { clearAuthStorage } from '@/utils/auth'
@@ -28,6 +29,31 @@ service.interceptors.request.use(
 )
 
 const isLoginRequest = (url = '') => url.includes('/login')
+
+// 接口错误上报：只上报"系统没按预期工作"的情况。
+// 业务校验失败（密码错误、邮箱已注册）属于预期内的高频事件，上报会淹没真正的 bug，
+// 这类只在响应拦截器里留一条面包屑。
+const reportApiError = (error, config = {}) => {
+    // 主动取消的请求不是错误（用户切页面、组件卸载都可能触发）
+    if (error.code === 'ERR_CANCELED') return
+
+    const url = config.url || error.config?.url || ''
+    const status = error.response?.status
+    // 登录态过期属于正常业务流程，不当作异常
+    if (status === 401) return
+
+    Sentry.captureException(error, {
+        level: status >= 500 || !status ? 'error' : 'warning',
+        tags: {
+            api: url,
+            http_status: status ? String(status) : 'network_error'
+        },
+        // 只带后端返回的提示文案，不上报请求体/响应体，避免把用户隐私送进监控系统
+        extra: {
+            server_msg: error.response?.data?.msg || error.response?.data?.message
+        }
+    })
+}
 
 // 并发请求同时返回登录过期时，只处理一次，避免重复弹窗与重复跳转
 let lastTokenExpiredAt = 0
@@ -68,12 +94,27 @@ service.interceptors.response.use(
         }
 
         // 3. 普通业务错误只弹窗，不踢人
+        // 业务校验失败不进 Sentry issue，只留面包屑，排查时能看到"用户当时做了什么"
+        Sentry.addBreadcrumb({
+            category: 'api',
+            level: 'info',
+            message: `业务错误 code=${data.code} ${config.url || ''}`,
+            data: { code: data.code, msg: data.msg }
+        })
+        // 但业务码为 500 时说明服务端内部出错，这才是真 bug，需要上报
+        if (data.code === 500 || data.code === '500') {
+            Sentry.captureException(new Error(data.msg || '服务端业务异常'), {
+                tags: { api: config.url || '', biz_code: String(data.code) }
+            })
+        }
         ElMessage.error(data.msg || '系统错误')
         return Promise.reject(new Error(data.msg || '系统错误'))
     },
     (error) => {
         const status = error.response?.status
         const serverMsg = error.response?.data?.msg || error.response?.data?.message
+
+        reportApiError(error, error.config)
 
         // HTTP 层 401 同样按登录过期处理
         if (status === 401 && !isLoginRequest(error.config?.url)) {
