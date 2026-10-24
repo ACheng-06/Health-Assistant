@@ -4,7 +4,7 @@
     <el-table :data="tableData" style="width: 100%">
       <el-table-column label="用户头像" width="100" :align="`center`">
         <template #default="scope">
-          <el-avatar :src="`/avatars/${(scope.row.id % 10) + 1}.png`">
+          <el-avatar>
             {{ scope.row.userNickname?.substring(0, 1) || '用' }}
           </el-avatar>
         </template>

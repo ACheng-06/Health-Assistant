@@ -1,8 +1,10 @@
 import { createRouter, createWebHistory } from 'vue-router'
-import BackendLayout from '@/views/backend/BackendLayout.vue'
-import AuthLayout from '@/views/auth/AuthLayout.vue'
 import FrontendLayout from '@/views/frontend/FrontendLayout.vue'
 import { getToken, getUserInfo, isAdminUser } from '@/utils/auth'
+
+// 后台与认证布局改成按需加载：匿名访客打开前台页面时不再下载后台模块
+const BackendLayout = () => import('@/views/backend/BackendLayout.vue')
+const AuthLayout = () => import('@/views/auth/AuthLayout.vue')
 
 const backendroutes = [
   {
@@ -107,6 +109,12 @@ const frontendroutes = [
 
 const router = createRouter({
   history: createWebHistory(),
+  // 新页面回到顶部；浏览器前进/后退时恢复原位置；带锚点时滚到锚点
+  scrollBehavior(to, from, savedPosition) {
+    if (savedPosition) return savedPosition
+    if (to.hash) return { el: to.hash, behavior: 'smooth' }
+    return { top: 0 }
+  },
   routes: [
     ...backendroutes,
     ...frontendroutes,

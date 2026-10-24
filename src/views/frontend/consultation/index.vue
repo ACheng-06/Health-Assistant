@@ -259,8 +259,8 @@ import { useAuthStore } from '@/store/auth'
 const router = useRouter()
 const authStore = useAuthStore()
 
-const iconUrl1 = new URL('@/assets/images/logo.png', import.meta.url).href
-const iconUrl2 = new URL('@/assets/images/user.png', import.meta.url).href
+const iconUrl1 = new URL('@/assets/images/robot-fill.png', import.meta.url).href
+const iconUrl2 = new URL('@/assets/images/users.png', import.meta.url).href
 
 const currentSession = ref(null)
 const sessionList = ref([])

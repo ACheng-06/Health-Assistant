@@ -1,13 +1,68 @@
 <!doctype html>
-<html lang="en">
+<html lang="zh-CN">
   <head>
     <meta charset="UTF-8" />
-    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>health-assistant</title>
+    <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
+    <title>心理健康AI助手 · 情绪记录与陪伴</title>
+    <meta
+      name="description"
+      content="心理健康AI助手：随时记录情绪、与 AI 对话梳理心情，并提供可以慢慢读的心理知识库。"
+    />
+    <meta name="theme-color" content="#2ebf91" />
+    <!-- 接口与静态资源同源，提前建连可省掉首个数据请求的一次握手往返 -->
+    <link rel="preconnect" href="http://159.75.169.224:1235" crossorigin />
+    <style>
+      /* 首屏占位：Vue 挂载后 #app 内容会被整体替换 */
+      .boot-skeleton {
+        position: fixed;
+        inset: 0;
+        display: flex;
+        flex-direction: column;
+        background: #f4f8f7;
+      }
+
+      .boot-skeleton__nav {
+        height: 70px;
+        flex-shrink: 0;
+        background: #ffffff;
+        border-bottom: 1px solid #e3ebe8;
+      }
+
+      .boot-skeleton__body {
+        flex: 1;
+        width: min(1100px, calc(100% - 48px));
+        margin: 32px auto;
+        border-radius: 20px;
+        background: linear-gradient(100deg, #eef4f2 20%, #f7fbfa 40%, #eef4f2 60%);
+        background-size: 200% 100%;
+        animation: boot-shimmer 1.4s ease-in-out infinite;
+      }
+
+      @keyframes boot-shimmer {
+        from {
+          background-position: 120% 0;
+        }
+
+        to {
+          background-position: -20% 0;
+        }
+      }
+
+      @media (prefers-reduced-motion: reduce) {
+        .boot-skeleton__body {
+          animation: none;
+        }
+      }
+    </style>
   </head>
   <body>
-    <div id="app"></div>
+    <div id="app">
+      <div class="boot-skeleton" aria-hidden="true">
+        <div class="boot-skeleton__nav"></div>
+        <div class="boot-skeleton__body"></div>
+      </div>
+    </div>
     <script type="module" src="/src/main.js"></script>
   </body>
 </html>

@@ -11,8 +11,8 @@
     <div class="flex-box">
       <el-dropdown @command="handleCommand">
         <div class="flex-box">
-          <el-avatar style="margin-right: 10px;" :src="userImg" alt="logo" />
-          <p class="user-name">ACheng</p>
+          <el-avatar style="margin-right: 10px;" :size="32">{{ userInitial }}</el-avatar>
+          <p class="user-name">{{ userDisplayName }}</p>
           <el-icon>
             <ArrowDown />
           </el-icon>
@@ -28,14 +28,19 @@
 </template>
 
 <script setup>
+  import { computed } from 'vue'
   import { useRoute, useRouter } from 'vue-router'
   import { logoutAPI } from '@/api/auth'
-  import userImg from '@/assets/images/user.jpg'
   import { useAdminStore } from '@/store/admin'
   import { useAuthStore } from '@/store/auth'
   import { Expand, ArrowDown } from '@element-plus/icons-vue'
   const router = useRouter()
   const authStore = useAuthStore()
+  // 头像改用昵称首字兜底，不再依赖独立图片资源
+  const userDisplayName = computed(
+    () => authStore.userInfo?.nickname || authStore.userInfo?.username || '管理员'
+  )
+  const userInitial = computed(() => userDisplayName.value.slice(0, 1))
   const handleCommand = async (command) => {
     if (command === 'logout') {
       // 退出登录逻辑
