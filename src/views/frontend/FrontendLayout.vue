@@ -72,30 +72,7 @@
     </main>
 
     <footer v-if="!isChatRoute" class="footer-container">
-      <div class="fe-container footer-grid">
-        <div class="footer-brand">
-          <div class="footer-brand-line">
-            <img :src="iconUrl" alt="" />
-            <strong>心理健康AI助手</strong>
-          </div>
-          <p>用温暖、清晰且可靠的陪伴，帮助你更了解自己的情绪。</p>
-        </div>
-
-        <div class="footer-column">
-          <h2>快捷导航</h2>
-          <router-link to="/">首页</router-link>
-          <router-link v-if="isLoggedIn" to="/consultation">AI 咨询</router-link>
-          <router-link v-if="isLoggedIn" to="/emotion-diary">情绪日记</router-link>
-          <router-link v-if="isLoggedIn" to="/frontendKnowledge">知识库</router-link>
-        </div>
-
-        <div class="footer-column footer-note">
-          <h2>使用说明</h2>
-          <p>AI 陪伴不能替代专业医疗诊断。</p>
-          <p>如遇紧急情况，请及时联系当地专业机构或急救服务。</p>
-        </div>
-      </div>
-      <div class="footer-bottom">© 2026 心理健康AI助手 版权所有</div>
+      <p class="footer-copyright">© 2026 心理健康AI助手. All rights reserved.</p>
     </footer>
   </div>
 </template>
@@ -345,97 +322,18 @@ onBeforeUnmount(() => {
 
 .footer-container {
   margin-top: auto;
+  padding: 20px 24px;
+  border-top: 1px solid var(--fe-border);
   background: var(--fe-surface);
-  border-top: 1px solid var(--fe-border);
-  color: var(--fe-text-soft);
-}
-
-.footer-grid {
-  display: grid;
-  grid-template-columns: 1.5fr 0.8fr 1.2fr;
-  gap: 56px;
-  padding-top: 48px;
-  padding-bottom: 36px;
-}
-
-.footer-brand-line {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-  margin-bottom: 14px;
-
-  img {
-    width: 32px;
-    height: 32px;
-    object-fit: contain;
-  }
-
-  strong {
-    color: var(--fe-text);
-    font-size: 17px;
-  }
-}
-
-.footer-brand p,
-.footer-note p {
-  margin: 0;
-  color: var(--fe-text-muted);
-  font-size: 14px;
-  line-height: 1.75;
-}
-
-.footer-column {
-  display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 10px;
-
-  h2 {
-    margin: 0 0 4px;
-    color: var(--fe-text);
-    font-size: 15px;
-    font-weight: 700;
-  }
-
-  a {
-    min-height: 28px;
-    color: var(--fe-text-muted);
-    font-size: 14px;
-    transition: color 0.2s ease;
-
-    &:hover {
-      color: var(--fe-brand-deep);
-    }
-
-    &:focus-visible {
-      outline: none;
-      border-radius: 4px;
-      box-shadow: 0 0 0 3px var(--fe-brand-ring);
-    }
-  }
-}
-
-.footer-note {
-  gap: 8px;
-}
-
-.footer-bottom {
-  padding: 18px 24px;
-  border-top: 1px solid var(--fe-border);
-  color: var(--fe-text-faint);
-  font-size: 13px;
   text-align: center;
 }
 
-@media (max-width: 900px) {
-  .footer-grid {
-    grid-template-columns: 1fr 1fr;
-    gap: 36px;
-  }
-
-  .footer-brand {
-    grid-column: 1 / -1;
-  }
+.footer-copyright {
+  margin: 0;
+  color: var(--fe-text-muted);
+  font-size: 13px;
+  line-height: 1.6;
+  letter-spacing: 0.01em;
 }
 
 @media (max-width: 768px) {
@@ -471,14 +369,6 @@ onBeforeUnmount(() => {
 @media (max-width: 600px) {
   .brand-name {
     display: none;
-  }
-
-  .footer-grid {
-    grid-template-columns: 1fr;
-  }
-
-  .footer-brand {
-    grid-column: auto;
   }
 }
 </style>
