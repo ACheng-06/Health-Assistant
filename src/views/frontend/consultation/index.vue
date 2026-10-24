@@ -66,9 +66,9 @@
         <div v-if="!sessionList.length" class="sb-empty">暂无历史对话</div>
       </div>
 
-      <div class="sb-emotion">
+      <div class="sb-emotion" :class="`is-${emotionLevel}`">
         <div class="emotion-heading">
-          <div class="emotion-score">{{ currentEmotion.emotionScore ?? 50 }}</div>
+          <div class="emotion-score" :class="`is-${emotionLevel}`">{{ currentEmotion.emotionScore ?? 50 }}</div>
           <div>
             <strong>情绪指数</strong>
             <span :class="{ concern: currentEmotion.isNegative }">
@@ -82,7 +82,7 @@
               v-for="dot in 3"
               :key="dot"
               class="dot"
-              :class="{ active: getIntensityClass(currentEmotion.emotionScore) >= dot }"
+              :class="{ active: intensityDots >= dot }"
             ></span>
           </span>
           <span>{{ getRiskText(currentEmotion.riskLevel) }}</span>
@@ -445,11 +445,26 @@ const stopActiveStream = () => {
   isAiTyping.value = false
 }
 
-const getIntensityClass = (score) => {
-  if (score >= 61) return 3
-  if (score >= 31) return 2
-  return 1
-}
+// 情绪指数是「状态分」，越高越好：低分告急，高分平稳
+// 风险等级更高时向上取更严重的档位（先判严重档，避免被高档兜底拉回浅色）
+const emotionLevel = computed(() => {
+  const score = Number(currentEmotion.value?.emotionScore ?? 50)
+  const risk = Number(currentEmotion.value?.riskLevel ?? 0)
+  if (score < 30 || risk >= 3) return 'crisis'
+  if (score < 50 || risk >= 2) return 'warn'
+  if (score < 70 || risk >= 1) return 'watch'
+  return 'good'
+})
+
+// 小圆点表示需要关注的程度，亮得越多越严重
+const intensityDots = computed(() => {
+  switch (emotionLevel.value) {
+    case 'crisis': return 3
+    case 'warn': return 3
+    case 'watch': return 2
+    default: return 1
+  }
+})
 
 const getRiskText = (level) => {
   switch (level) {
@@ -1202,6 +1217,30 @@ onMounted(() => {
   color: var(--fe-surface);
   font-size: 16px;
   font-weight: 800;
+  transition:
+    background-color 0.35s ease,
+    box-shadow 0.35s ease;
+
+  /* 底色跟随情绪状态变化：分数低告急、分数高平稳 */
+  &.is-good {
+    background-image: linear-gradient(135deg, #10b981, #047857);
+    box-shadow: 0 6px 16px rgba(4, 120, 87, 0.3);
+  }
+
+  &.is-watch {
+    background-image: var(--fe-grad-accent);
+    box-shadow: 0 6px 16px rgba(92, 107, 192, 0.3);
+  }
+
+  &.is-warn {
+    background-image: linear-gradient(135deg, #f59e0b, #b45309);
+    box-shadow: 0 6px 16px rgba(180, 83, 9, 0.32);
+  }
+
+  &.is-crisis {
+    background-image: linear-gradient(135deg, #ef4444, #b91c1c);
+    box-shadow: 0 6px 16px rgba(185, 28, 28, 0.34);
+  }
 }
 
 .emotion-intensity {
@@ -1223,10 +1262,28 @@ onMounted(() => {
   height: 7px;
   border-radius: 50%;
   background: var(--fe-border-strong);
+  transition: background-color 0.35s ease;
 
   &.active {
     background: var(--fe-brand);
   }
+}
+
+/* 强度小圆点跟徽标同色，避免一红一绿 */
+.sb-emotion.is-good .dot.active {
+  background: #047857;
+}
+
+.sb-emotion.is-watch .dot.active {
+  background: var(--fe-accent-deep);
+}
+
+.sb-emotion.is-warn .dot.active {
+  background: #b45309;
+}
+
+.sb-emotion.is-crisis .dot.active {
+  background: #b91c1c;
 }
 
 .emotion-suggestion {
