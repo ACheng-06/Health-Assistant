@@ -10,6 +10,16 @@
       content="心理健康AI助手：随时记录情绪、与 AI 对话梳理心情，并提供可以慢慢读的心理知识库。"
     />
     <meta name="theme-color" content="#2ebf91" />
+
+    <!-- Microsoft Clarity 会话回放：async 加载，不阻塞首屏骨架 -->
+    <script type="text/javascript">
+      (function(c,l,a,r,i,t,y){
+        c[a]=c[a]||function(){(c[a].q=c[a].q||[]).push(arguments)};
+        t=l.createElement(r);t.async=1;t.src="https://www.clarity.ms/tag/"+i;
+        y=l.getElementsByTagName(r)[0];y.parentNode.insertBefore(t,y);
+      })(window, document, "clarity", "script", "z3otrnvad4");
+    </script>
+
     <!-- 接口与静态资源同源，提前建连可省掉首个数据请求的一次握手往返 -->
     <link rel="preconnect" href="http://159.75.169.224:1235" crossorigin />
     <style>

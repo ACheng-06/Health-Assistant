@@ -17,7 +17,8 @@
       <div class="fe-container">
         <el-form ref="formRef" :model="diaryForm" :rules="rules" label-position="top">
           <!-- 情绪评分 -->
-          <div v-reveal class="diary-card">
+          <!-- 以下三张卡片涉及情绪与日记内容，Clarity 回放里强制打码（点击热图不受影响） -->
+          <div v-reveal class="diary-card" data-clarity-mask="true">
             <div class="card-head">
               <h2>今日情绪评分</h2>
               <span class="card-hint">1 分很难受 · 10 分很舒展</span>
@@ -31,7 +32,7 @@
           </div>
 
           <!-- 主要情绪 -->
-          <div v-reveal="1" class="diary-card">
+          <div v-reveal="1" class="diary-card" data-clarity-mask="true">
             <div class="card-head">
               <h2>主要情绪</h2>
               <span class="card-hint">选一个最贴近此刻的</span>
@@ -56,7 +57,7 @@
           </div>
 
           <!-- 详情记录 -->
-          <div v-reveal="2" class="diary-card">
+          <div v-reveal="2" class="diary-card" data-clarity-mask="true">
             <div class="card-head">
               <h2>详细记录</h2>
               <span class="card-hint">写下来的那一刻，就已经在照顾自己了</span>

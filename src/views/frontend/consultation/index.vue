@@ -171,7 +171,12 @@
               />
             </div>
             <div class="message-cluster">
-              <div class="message-bubble" :class="{ 'error-bubble': msg.isError }">
+              <!-- 对话内容属敏感信息，Clarity 回放里强制打码（点击热图不受影响） -->
+              <div
+                class="message-bubble"
+                :class="{ 'error-bubble': msg.isError }"
+                data-clarity-mask="true"
+              >
                 <div
                   v-if="msg.senderType === 2 && isAiTyping && !msg.content"
                   class="typing-indicator"
@@ -204,7 +209,7 @@
       </div>
 
       <div class="chat-input-area">
-        <div class="input-card">
+        <div class="input-card" data-clarity-mask="true">
           <el-input
             ref="inputRef"
             v-model="userMessage"
