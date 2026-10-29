@@ -5,6 +5,37 @@ import { apiBaseUrl } from '@/config'
 // 增量文本逐片更新会引发频繁布局，按 80ms 合并刷新
 export const STREAM_FLUSH_INTERVAL = 80
 
+// 六个状态覆盖一次生成的全部落点，没有“未知态”，UI 可以完全由状态派生
+export const STREAM_STATUS = Object.freeze({
+  IDLE: 'idle',
+  CONNECTING: 'connecting',
+  STREAMING: 'streaming',
+  DONE: 'done',
+  ABORTED: 'aborted',
+  ERROR: 'error'
+})
+
+// 迁移白名单：只有表里写明的边才允许走，其余一律拦截。
+// 终态之间不允许互跳（已被停止的不会因为迟到的 onclose 又变成 done），
+// 只允许重新发起连接——这让“停止后又收到完成回调”这类竞态在状态层就断掉。
+const TRANSITIONS = Object.freeze({
+  [STREAM_STATUS.IDLE]: [STREAM_STATUS.CONNECTING],
+  [STREAM_STATUS.CONNECTING]: [
+    STREAM_STATUS.STREAMING,
+    STREAM_STATUS.DONE,
+    STREAM_STATUS.ABORTED,
+    STREAM_STATUS.ERROR
+  ],
+  [STREAM_STATUS.STREAMING]: [
+    STREAM_STATUS.DONE,
+    STREAM_STATUS.ABORTED,
+    STREAM_STATUS.ERROR
+  ],
+  [STREAM_STATUS.DONE]: [STREAM_STATUS.CONNECTING],
+  [STREAM_STATUS.ABORTED]: [STREAM_STATUS.CONNECTING],
+  [STREAM_STATUS.ERROR]: [STREAM_STATUS.CONNECTING]
+})
+
 /**
  * 一次流式生成的生命周期：连接、聚合、停止、失败。
  *
@@ -12,18 +43,41 @@ export const STREAM_FLUSH_INTERVAL = 80
  * 组件只通过回调拿到"当前累计文本 / 结束 / 中止 / 失败"。
  *
  * 状态机：idle -> connecting -> streaming -> done | aborted | error
+ * 每次迁移都要过白名单，叠加 generation 代数守卫：
+ * 白名单管“这个迁移合不合法”，代数管“这个回调是不是上一代的”。
  */
 export function useChatStream({
   transport = fetchEventSource,
   endpoint = `${apiBaseUrl}/psychological-chat/stream`
 } = {}) {
-  const status = ref('idle')
+  const status = ref(STREAM_STATUS.IDLE)
   const content = ref('')
   const error = ref(null)
 
   const isActive = computed(
-    () => status.value === 'connecting' || status.value === 'streaming'
+    () =>
+      status.value === STREAM_STATUS.CONNECTING || status.value === STREAM_STATUS.STREAMING
   )
+  const isSettled = computed(
+    () =>
+      status.value === STREAM_STATUS.DONE ||
+      status.value === STREAM_STATUS.ABORTED ||
+      status.value === STREAM_STATUS.ERROR
+  )
+
+  // 状态迁移的唯一入口：非法边直接丢弃，开发态告警便于尽早发现回调顺序错乱
+  const transition = (next) => {
+    const from = status.value
+    if (from === next) return true
+    if (!TRANSITIONS[from]?.includes(next)) {
+      if (import.meta.env?.DEV) {
+        console.warn(`[useChatStream] 非法状态迁移已拦截: ${from} -> ${next}`)
+      }
+      return false
+    }
+    status.value = next
+    return true
+  }
 
   let controller = null
   let buffer = ''
@@ -59,7 +113,7 @@ export function useChatStream({
     if (generationAtStart !== generation) return
     flush()
     error.value = message
-    status.value = 'error'
+    transition(STREAM_STATUS.ERROR)
     handlers.onError?.(message, content.value)
   }
 
@@ -84,7 +138,7 @@ export function useChatStream({
     handlers = currentHandlers
     content.value = ''
     error.value = null
-    status.value = 'connecting'
+    transition(STREAM_STATUS.CONNECTING)
     discardBuffer()
 
     transport(endpoint, {
@@ -101,7 +155,7 @@ export function useChatStream({
 
         if (response.status === 401 || response.status === 403) {
           discardBuffer()
-          status.value = 'error'
+          transition(STREAM_STATUS.ERROR)
           currentHandlers.onUnauthorized?.()
           currentController.abort()
           return
@@ -112,7 +166,7 @@ export function useChatStream({
           fail(currentGeneration, '服务器响应异常，请稍后重试')
           currentController.abort()
         } else {
-          status.value = 'streaming'
+          transition(STREAM_STATUS.STREAMING)
         }
       },
       onmessage: (event) => {
@@ -123,7 +177,7 @@ export function useChatStream({
 
         if (event.event === 'done') {
           flush()
-          status.value = 'done'
+          transition(STREAM_STATUS.DONE)
           currentHandlers.onDone?.()
           currentController.abort()
           return
@@ -133,8 +187,10 @@ export function useChatStream({
           const payload = JSON.parse(raw)
           const ok = String(payload.code) === '200'
           if (ok && payload.data && payload.data.content) {
+            // 已进入终态的流不再接受增量，避免停止后又被追加内容
+            if (!isActive.value) return
             buffer += payload.data.content
-            if (status.value !== 'streaming') status.value = 'streaming'
+            transition(STREAM_STATUS.STREAMING)
             if (!flushTimer) {
               flushTimer = setTimeout(() => {
                 flushTimer = null
@@ -161,16 +217,20 @@ export function useChatStream({
       },
       onclose: () => {
         if (currentGeneration !== generation) return
+        // 只有还在进行中的流才需要被 onclose 收尾，终态一律不动
+        if (!isActive.value) return
         flush()
-        if (status.value !== 'error') status.value = 'done'
+        transition(STREAM_STATUS.DONE)
       }
     }).catch(() => {
       // 中止与错误已由统一回调处理，这里只消费 Promise rejection
     }).finally(() => {
       if (currentGeneration !== generation) return
-      flush()
+      if (isActive.value) {
+        flush()
+        transition(STREAM_STATUS.DONE)
+      }
       if (controller === currentController) controller = null
-      if (status.value === 'connecting' || status.value === 'streaming') status.value = 'done'
     })
   }
 
@@ -183,28 +243,42 @@ export function useChatStream({
     flush()
     generation += 1
     currentController?.abort()
-    status.value = 'aborted'
+    transition(STREAM_STATUS.ABORTED)
     handlers.onAbort?.(content.value)
     return true
   }
 
   // 静默中止：切换会话、卸载组件时用，不触发任何回调
   const abort = () => {
+    // 已经是终态就没有需要中止的流，避免把 done/error 误改成 aborted
+    if (!isActive.value) return
+
     const currentController = controller
     controller = null
     generation += 1
     discardBuffer()
     currentController?.abort()
-    status.value = 'aborted'
+    transition(STREAM_STATUS.ABORTED)
   }
 
   const reset = () => {
     abort()
     content.value = ''
     error.value = null
-    status.value = 'idle'
+    // 硬重置是唯一绕过迁移表的路径，用于组件初始化
+    status.value = STREAM_STATUS.IDLE
     handlers = {}
   }
 
-  return { status, content, error, isActive, start, stop, abort, reset }
+  return {
+    status,
+    content,
+    error,
+    isActive,
+    isSettled,
+    start,
+    stop,
+    abort,
+    reset
+  }
 }
