@@ -28,7 +28,12 @@ service.interceptors.request.use(
   }
 )
 
-const isLoginRequest = (url = '') => url.includes('/login')
+// 认证类接口：它们返回 401/403 是正常业务结果（密码错误、未登录等），不触发全局登录过期处理
+const AUTH_REQUEST_PATHS = ['/user/login', '/user/add', '/user/logout']
+const isAuthRequest = (url = '') => AUTH_REQUEST_PATHS.some((path) => url.includes(path))
+
+// 后端 token 失效统一返回 HTTP 403（空响应体），个别场景返回 401，两者都按登录过期处理
+const isAuthFailure = (status) => status === 401 || status === 403
 
 // 接口错误上报：只上报"系统没按预期工作"的情况。
 // 业务校验失败（密码错误、邮箱已注册）属于预期内的高频事件，上报会淹没真正的 bug，
@@ -40,7 +45,7 @@ const reportApiError = (error, config = {}) => {
     const url = config.url || error.config?.url || ''
     const status = error.response?.status
     // 登录态过期属于正常业务流程，不当作异常
-    if (status === 401) return
+    if (isAuthFailure(status)) return
 
     Sentry.captureException(error, {
         level: status >= 500 || !status ? 'error' : 'warning',
@@ -84,10 +89,13 @@ service.interceptors.response.use(
         }
 
         // 2. 处理登录过期：业务错误统一在这里提示，页面内不要重复弹窗
-        const isTokenExpired = data.code === 401 || data.code === '401' || (data.code === '-1' && data.msg?.includes('登录'))
+        const isTokenExpired =
+            data.code === 401 || data.code === '401' ||
+            data.code === 403 || data.code === '403' ||
+            (data.code === '-1' && data.msg?.includes('登录'))
 
         if (isTokenExpired) {
-            if (!isLoginRequest(config.url)) {
+            if (!isAuthRequest(config.url)) {
                 handleTokenExpired(data.msg)
             }
             return Promise.reject(new Error(data.msg || '登录已过期'))
@@ -116,8 +124,8 @@ service.interceptors.response.use(
 
         reportApiError(error, error.config)
 
-        // HTTP 层 401 同样按登录过期处理
-        if (status === 401 && !isLoginRequest(error.config?.url)) {
+        // HTTP 层 401/403（token 失效）同样按登录过期处理
+        if (isAuthFailure(status) && !isAuthRequest(error.config?.url)) {
             handleTokenExpired(serverMsg)
             return Promise.reject(error)
         }

@@ -126,7 +126,7 @@ public/
 
 - **鉴权**：请求头携带 `token`；登录接口返回 `{ token, userInfo }`。
 - **响应结构**：统一的 `{ code, msg, data }`。`code` 为 `200`（数字或字符串）时，拦截器直接返回 `data`；其余情况提示 `msg` 并 reject。
-- **登录过期**：`code` 为 `401`，或 `-1` 且 `msg` 含 “登录” 时，清理登录态并跳登录页；并发请求下 1.5 秒内只处理一次。
+- **登录过期**：token 失效时后端返回 HTTP `403`（空响应体），因此 HTTP `401`/`403` 以及业务 `code` 为 `401`/`403`、`-1` 且 `msg` 含 “登录” 时，都会清理登录态并跳登录页；并发请求下 1.5 秒内只处理一次。`/user/login`、`/user/add`、`/user/logout` 不触发该逻辑。
 - **分页**：前端统一使用 `currentPage`，同时冗余携带 `page`，以兼容后端不同命名（详见 `src/utils/pagination.js`）。
 - **流式对话**：`POST /psychological-chat/stream` 返回 `text/event-stream`，正文为 JSON（`data.content` 为增量文本），`event: done` 表示本次回复结束。该请求不经过 axios 拦截器，401 处理在页面内完成。
 
