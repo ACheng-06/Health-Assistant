@@ -201,13 +201,13 @@
                 <p v-else-if="msg.content" class="plain-text">{{ msg.content }}</p>
               </div>
               <div
-                v-if="msg.stopped || msg.error"
+                v-if="msg.stopped || msg.error || (msg.isError && msg.retryWith)"
                 class="stream-status"
-                :class="{ 'is-error': msg.error }"
+                :class="{ 'is-error': msg.error || msg.isError }"
               >
-                <span>{{ msg.error || '已停止生成' }}</span>
+                <span v-if="msg.error || msg.stopped">{{ msg.error || '已停止生成' }}</span>
                 <button
-                  v-if="msg.error && msg.retryWith"
+                  v-if="msg.retryWith && (msg.error || msg.isError)"
                   type="button"
                   class="retry-btn"
                   @click="retryMessage(msg)"
