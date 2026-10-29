@@ -1892,11 +1892,11 @@ onMounted(() => {
     }
   }
 
-  /* 生成中切换为停止：中性深色，避免与“发送”的品牌绿混淆 */
+  /* 生成中切换为停止：淡红底 + 深红图标，提示“会中断”但不刺眼 */
   &.is-stop {
-    background: var(--fe-text-soft);
-    box-shadow: none;
-    color: var(--fe-surface);
+    background: var(--fe-danger-soft);
+    box-shadow: inset 0 0 0 1px var(--fe-danger-ring);
+    color: var(--fe-danger);
     cursor: pointer;
 
     svg {
@@ -1906,12 +1906,14 @@ onMounted(() => {
     }
 
     &:hover {
+      background: var(--fe-danger-ring);
+      color: var(--fe-danger-deep);
       transform: scale(1.04);
     }
 
     &:focus-visible {
       outline: none;
-      box-shadow: 0 0 0 3px var(--fe-brand-ring);
+      box-shadow: 0 0 0 3px var(--fe-danger-ring);
     }
   }
 }
