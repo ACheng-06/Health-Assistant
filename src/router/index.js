@@ -1,6 +1,7 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import FrontendLayout from '@/views/frontend/FrontendLayout.vue'
 import { getToken, getUserInfo, isAdminUser } from '@/utils/auth'
+import { trackPageView } from '@/utils/analytics'
 
 // 后台与认证布局改成按需加载：匿名访客打开前台页面时不再下载后台模块
 const BackendLayout = () => import('@/views/backend/BackendLayout.vue')
@@ -123,6 +124,11 @@ const router = createRouter({
       component: () => import('@/views/NotFound.vue')
     }
   ]
+})
+
+router.afterEach((to, from, failure) => {
+  if (failure) return
+  trackPageView(to)
 })
 
 router.beforeEach((to, from, next) => {

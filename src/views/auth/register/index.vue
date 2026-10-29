@@ -1,7 +1,9 @@
 <template>
   <div class="auth-card">
     <router-link to="/" class="back-home">
-      <el-icon><Back /></el-icon>
+      <el-icon>
+        <Back />
+      </el-icon>
       <span>返回首页</span>
     </router-link>
 
@@ -41,13 +43,7 @@
       </el-form-item>
 
       <el-form-item label="确认密码" prop="confirmPassword">
-        <el-input
-          v-model="formData.confirmPassword"
-          type="password"
-          show-password
-          placeholder="请再次输入密码"
-          size="large"
-        />
+        <el-input v-model="formData.confirmPassword" type="password" show-password placeholder="请再次输入密码" size="large" />
       </el-form-item>
 
       <el-button class="submit-btn" type="primary" size="large" :loading="loading" @click="submitForm(submitFormRef)">
@@ -60,84 +56,87 @@
 </template>
 
 <script setup>
-import { reactive, ref } from 'vue'
-import { useRouter } from 'vue-router'
-import { ElMessage } from 'element-plus/es/components/message/index.mjs'
-import { Back } from '@element-plus/icons-vue'
-import { registerAPI } from '@/api/auth'
+  import { reactive, ref } from 'vue'
+  import { useRouter } from 'vue-router'
+  import { ElMessage } from 'element-plus/es/components/message/index.mjs'
+  import { Back } from '@element-plus/icons-vue'
+  import { registerAPI } from '@/api/auth'
+  import { track } from '@/utils/analytics'
 
-const router = useRouter()
+  const router = useRouter()
 
-// 只接受站内支持的三种邮箱后缀，一次输入完整地址
-const EMAIL_PATTERN = /^[A-Za-z0-9._%+-]+@(?:qq|163|gmail)\.com$/i
+  // 只接受站内支持的三种邮箱后缀，一次输入完整地址
+  const EMAIL_PATTERN = /^[A-Za-z0-9._%+-]+@(?:qq|163|gmail)\.com$/i
 
-const formData = reactive({
-  username: '',
-  email: '',
-  nickname: '',
-  phone: '',
-  password: '',
-  confirmPassword: '',
-  gender: 1,
-  userType: 1
-})
+  const formData = reactive({
+    username: '',
+    email: '',
+    nickname: '',
+    phone: '',
+    password: '',
+    confirmPassword: '',
+    gender: 1,
+    userType: 1
+  })
 
-const rules = reactive({
-  username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
-  email: [
-    { required: true, message: '请输入邮箱', trigger: 'blur' },
-    {
-      pattern: EMAIL_PATTERN,
-      message: '邮箱需以 @qq.com、@163.com 或 @gmail.com 结尾',
-      trigger: 'blur'
+  const rules = reactive({
+    username: [{ required: true, message: '请输入用户名', trigger: 'blur' }],
+    email: [
+      { required: true, message: '请输入邮箱', trigger: 'blur' },
+      {
+        pattern: EMAIL_PATTERN,
+        message: '邮箱需以 @qq.com、@163.com 或 @gmail.com 结尾',
+        trigger: 'blur'
+      }
+    ],
+    nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
+    gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
+    phone: [{ pattern: /^1\d{10}$/, required: true, message: '请输入正确的手机号', trigger: 'blur' }],
+    password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
+    confirmPassword: [
+      { required: true, message: '请再次输入确认密码', trigger: 'blur' },
+      {
+        validator: (_rule, value, callback) => {
+          if (value !== formData.password) {
+            callback(new Error('两次输入的密码不一致'))
+            return
+          }
+          callback()
+        },
+        trigger: 'blur'
+      }
+    ]
+  })
+
+  const submitFormRef = ref(null)
+  const loading = ref(false)
+
+  const submitForm = async (formEl) => {
+    if (!formEl || loading.value) return
+    const valid = await formEl.validate().catch(() => false)
+    if (!valid) return
+
+    loading.value = true
+    try {
+      // confirmPassword 必须一起提交：后端会再次校验两次密码是否一致，
+      // 缺失时只会返回笼统的「注册失败，请稍后重试」
+      await registerAPI({
+        ...formData,
+        email: formData.email.trim()
+      })
+      ElMessage.success('注册成功')
+      //埋点2
+      track('register_success')
+      router.push('/auth/login')
+    } catch (error) {
+      // 拦截器已统一提示；这里为「注册失败，请稍后重试」补充最可能的原因
+      if (error?.message?.includes('注册失败')) {
+        ElMessage.warning('该用户名、手机号或邮箱可能已被注册，请更换后重试')
+      }
+    } finally {
+      loading.value = false
     }
-  ],
-  nickname: [{ required: true, message: '请输入昵称', trigger: 'blur' }],
-  gender: [{ required: true, message: '请选择性别', trigger: 'change' }],
-  phone: [{ pattern: /^1\d{10}$/, required: true, message: '请输入正确的手机号', trigger: 'blur' }],
-  password: [{ required: true, message: '请输入密码', trigger: 'blur' }],
-  confirmPassword: [
-    { required: true, message: '请再次输入确认密码', trigger: 'blur' },
-    {
-      validator: (_rule, value, callback) => {
-        if (value !== formData.password) {
-          callback(new Error('两次输入的密码不一致'))
-          return
-        }
-        callback()
-      },
-      trigger: 'blur'
-    }
-  ]
-})
-
-const submitFormRef = ref(null)
-const loading = ref(false)
-
-const submitForm = async (formEl) => {
-  if (!formEl || loading.value) return
-  const valid = await formEl.validate().catch(() => false)
-  if (!valid) return
-
-  loading.value = true
-  try {
-    // confirmPassword 必须一起提交：后端会再次校验两次密码是否一致，
-    // 缺失时只会返回笼统的「注册失败，请稍后重试」
-    await registerAPI({
-      ...formData,
-      email: formData.email.trim()
-    })
-    ElMessage.success('注册成功')
-    router.push('/auth/login')
-  } catch (error) {
-    // 拦截器已统一提示；这里为「注册失败，请稍后重试」补充最可能的原因
-    if (error?.message?.includes('注册失败')) {
-      ElMessage.warning('该用户名、手机号或邮箱可能已被注册，请更换后重试')
-    }
-  } finally {
-    loading.value = false
   }
-}
 </script>
 
 <style scoped lang="scss">
