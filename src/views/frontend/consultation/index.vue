@@ -134,8 +134,8 @@
         </div>
       </header>
 
-      <div ref="chatMessagesRef" class="chat-messages">
-        <div class="chat-stream">
+      <div ref="chatMessagesRef" class="chat-messages" @scroll.passive="handleScroll">
+        <div ref="chatStreamRef" class="chat-stream">
           <section v-if="messages.length === 0" class="chat-welcome" aria-label="欢迎使用心理健康AI助手">
             <div class="welcome-avatar">
               <img :src="iconUrl1" alt="" />
@@ -200,12 +200,36 @@
                 />
                 <p v-else-if="msg.content" class="plain-text">{{ msg.content }}</p>
               </div>
+              <div
+                v-if="msg.stopped || msg.error"
+                class="stream-status"
+                :class="{ 'is-error': msg.error }"
+              >
+                <span>{{ msg.error || '已停止生成' }}</span>
+                <button
+                  v-if="msg.error && msg.retryWith"
+                  type="button"
+                  class="retry-btn"
+                  @click="retryMessage(msg)"
+                >
+                  重新生成
+                </button>
+              </div>
               <time class="message-time">
                 {{ msg.senderType === 2 && isAiTyping ? '正在输入中...' : formatMessageTime(msg.createdAt) }}
               </time>
             </div>
           </div>
         </div>
+
+        <button
+          v-if="showJumpToLatest"
+          type="button"
+          class="jump-latest"
+          @click="scrollToBottom({ force: true })"
+        >
+          回到最新
+        </button>
       </div>
 
       <div class="chat-input-area">
@@ -217,7 +241,6 @@
             :autosize="{ minRows: 1, maxRows: 6 }"
             resize="none"
             maxlength="500"
-            :disabled="isAiTyping"
             placeholder="写下此刻的感受，我会认真听你说..."
             aria-label="输入对话内容"
             @keydown="handleKeyDown"
@@ -225,13 +248,16 @@
           <button
             type="button"
             class="send-btn"
-            :class="{ active: canSend }"
-            :disabled="!canSend"
-            aria-label="发送消息"
-            @click="sendMessage"
+            :class="{ active: !isAiTyping && canSubmit, 'is-stop': isAiTyping }"
+            :disabled="isAiTyping ? false : !canSubmit"
+            :aria-label="isAiTyping ? '停止生成' : '发送消息'"
+            @click="isAiTyping ? stopGeneration() : sendMessage()"
           >
-            <svg viewBox="0 0 24 24" aria-hidden="true">
+            <svg v-if="!isAiTyping" viewBox="0 0 24 24" aria-hidden="true">
               <path d="M12 19V5M6 11l6-6 6 6" />
+            </svg>
+            <svg v-else viewBox="0 0 24 24" aria-hidden="true">
+              <rect x="8" y="8" width="8" height="8" rx="1.5" />
             </svg>
           </button>
         </div>
@@ -278,8 +304,10 @@ const chatMessagesRef = ref(null)
 const inputRef = ref(null)
 const sidebarCollapsed = ref(window.matchMedia('(max-width: 900px)').matches)
 
-const canSend = computed(
-  () => userMessage.value.trim().length > 0 && userMessage.value.length <= 500 && !isAiTyping.value
+// 只判断“内容能不能发”，不再掺生成态：
+// 生成中输入框仍可编辑，按钮由模板切换成停止
+const canSubmit = computed(
+  () => userMessage.value.trim().length > 0 && userMessage.value.length <= 500
 )
 
 // 一次多拉一些再本地筛选，避免只取前 10 条时自己的会话被别人的记录挤掉
@@ -414,6 +442,8 @@ const currentEmotion = ref({
 })
 
 let activeStreamController = null
+// 当前正在生成的 AI 消息 id：停止、重试都要靠它定位气泡
+let activeMessageId = null
 
 // 流式内容逐片更新会引发频繁布局，按 80ms 合并刷新。
 const STREAM_FLUSH_INTERVAL = 80
@@ -449,7 +479,30 @@ const stopActiveStream = () => {
     activeStreamController = null
   }
   discardStreamBuffer()
+  activeMessageId = null
   isAiTyping.value = false
+}
+
+// 用户主动停止：先保住缓冲里最后一片，再中断连接。
+// 顺序不能反——abort 之后 onerror 走 AbortError 分支，内容不再追加。
+// 注意：这里只中断前端接收，后端可能仍在生成；再次进入会话以服务端历史为准。
+const stopGeneration = () => {
+  if (!isAiTyping.value) return
+
+  const messageId = activeMessageId
+  if (messageId) flushStreamBuffer(messageId)
+
+  activeStreamController?.abort()
+  activeStreamController = null
+  activeMessageId = null
+
+  const target = messages.value.find((message) => message.id === messageId)
+  if (target) target.stopped = true
+
+  isAiTyping.value = false
+  if (currentSession.value?.sessionId) {
+    loadSessionEmotion(currentSession.value.sessionId)
+  }
 }
 
 // 情绪指数是「状态分」，越高越好：低分告急，高分平稳
@@ -560,25 +613,80 @@ const handleDeleteSession = async (sessionId) => {
 
 const handleKeyDown = (event) => {
   if (event.isComposing) return
-  if (event.key === 'Enter' && !event.shiftKey) {
-    event.preventDefault()
-    sendMessage()
-  }
+  if (event.key !== 'Enter' || event.shiftKey) return
+  event.preventDefault()
+  // 生成中不发送、也不弹提示：用户可以把下一句先写完
+  if (isAiTyping.value) return
+  sendMessage()
 }
 
+// 距底 80px 内视为“贴底”：只有贴底时才自动跟随新内容
+const NEAR_BOTTOM_THRESHOLD = 80
+const isNearBottom = ref(true)
+const showJumpToLatest = ref(false)
+const chatStreamRef = ref(null)
+
 let scrollRafId = null
-const scrollToBottom = () => {
+const scrollToBottom = ({ force = false } = {}) => {
+  if (!force && !isNearBottom.value) return
   if (scrollRafId) return
   scrollRafId = requestAnimationFrame(() => {
     scrollRafId = null
-    if (chatMessagesRef.value) {
-      chatMessagesRef.value.scrollTop = chatMessagesRef.value.scrollHeight
+    const el = chatMessagesRef.value
+    if (!el) return
+    el.scrollTop = el.scrollHeight
+    isNearBottom.value = true
+    showJumpToLatest.value = false
+  })
+}
+
+const updateNearBottom = () => {
+  const el = chatMessagesRef.value
+  if (!el) return
+  // 内容不足一屏时本来就没得滚，必须视为贴底，否则永远不跟随
+  // （.chat-stream 用了 justify-content: flex-end，scrollHeight 会等于 clientHeight）
+  const atBottom =
+    el.scrollHeight <= el.clientHeight + 1 ||
+    el.scrollHeight - el.scrollTop - el.clientHeight <= NEAR_BOTTOM_THRESHOLD
+  isNearBottom.value = atBottom
+  if (atBottom) showJumpToLatest.value = false
+}
+
+let scrollRafPending = false
+const handleScroll = () => {
+  if (scrollRafPending) return
+  scrollRafPending = true
+  // 先同步算一次：scroll 事件早于 ResizeObserver，晚一步更新会让“上滑”被自动跟随抢回去
+  updateNearBottom()
+  requestAnimationFrame(() => {
+    scrollRafPending = false
+    updateNearBottom()
+  })
+}
+
+// 流式增量是“内容变高”，不是“消息条数变化”：watch(messages.length) 覆盖不到，
+// 必须观察 .chat-stream 的尺寸变化
+let streamResizeObserver = null
+const setupStreamObserver = () => {
+  const streamEl = chatStreamRef.value
+  if (!streamEl || !('ResizeObserver' in window)) return
+
+  streamResizeObserver = new ResizeObserver(() => {
+    if (isNearBottom.value) {
+      scrollToBottom({ force: true })
+    } else if (isAiTyping.value) {
+      // 用户正在往上翻，只在生成时提示；加载历史不打扰
+      showJumpToLatest.value = true
     }
   })
+  streamResizeObserver.observe(streamEl)
 }
 
 const createNewFrontendSession = () => {
   stopActiveStream()
+  // 新建会话后从底部重新开始，不能沿用上一条会话的滚动状态
+  isNearBottom.value = true
+  showJumpToLatest.value = false
   currentSession.value = {
     sessionId: `temp_${Date.now()}`,
     status: 'TEMP',
@@ -598,6 +706,8 @@ const createNewFrontendSession = () => {
 
 const handleSelectSessionClick = async (session) => {
   stopActiveStream()
+  isNearBottom.value = true
+  showJumpToLatest.value = false
   try {
     const res = await getSessionMessagesAPI(session.id)
     messages.value = res || []
@@ -637,7 +747,7 @@ const sendMessage = () => {
       content: msg,
       createdAt: new Date().toISOString()
     })
-    scrollToBottom()
+    scrollToBottom({ force: true })
     startAiResponse(currentSession.value.sessionId, msg)
   }
 }
@@ -666,7 +776,7 @@ const startNewSession = async (msg) => {
       content: msg,
       createdAt: new Date().toISOString()
     })
-    scrollToBottom()
+    scrollToBottom({ force: true })
     startAiResponse(currentSession.value.sessionId, msg)
   } catch (err) {
     console.error('创建会话失败:', err)
@@ -676,22 +786,32 @@ const startNewSession = async (msg) => {
   }
 }
 
-const startAiResponse = async (sessionId, msg) => {
+const startAiResponse = async (sessionId, msg, reuseMessage = null) => {
   if (isAiTyping.value) {
     ElMessage.error('心理健康AI助手正在输入中，请稍后再试...')
     return
   }
   isAiTyping.value = true
 
-  const messageId = `ai_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
-  messages.value.push({
-    id: messageId,
-    senderType: 2,
-    content: '',
-    createdAt: new Date().toISOString(),
-    isError: false
-  })
-  scrollToBottom()
+  // 重试时复用原气泡：不新增消息，避免列表里出现两条重复回复
+  const messageId = reuseMessage
+    ? reuseMessage.id
+    : `ai_${Date.now()}_${Math.random().toString(36).substring(2, 9)}`
+  activeMessageId = messageId
+
+  if (!reuseMessage) {
+    messages.value.push({
+      id: messageId,
+      senderType: 2,
+      content: '',
+      createdAt: new Date().toISOString(),
+      isError: false,
+      error: '',
+      stopped: false,
+      retryWith: { sessionId, userMessage: msg }
+    })
+  }
+  scrollToBottom({ force: true })
 
   const ctrl = new AbortController()
   activeStreamController = ctrl
@@ -774,12 +894,14 @@ const startAiResponse = async (sessionId, msg) => {
       activeStreamController = null
       isAiTyping.value = false
     }
+    if (activeMessageId === messageId) activeMessageId = null
   })
 }
 
 const handleUnauthorized = (messageId = null) => {
   discardStreamBuffer()
   authStore.logout()
+  activeMessageId = null
   const target = messageId ? messages.value.find((message) => message.id === messageId) : null
   if (target) {
     target.content = '登录已过期，请重新登录'
@@ -791,16 +913,40 @@ const handleUnauthorized = (messageId = null) => {
 }
 
 const handleError = (errorMsg, messageId = null) => {
+  // 先落盘再丢弃：已收到的增量必须写进气泡，不能因为报错把正文冲掉
+  const targetId = messageId || activeMessageId
+  if (targetId) flushStreamBuffer(targetId)
   discardStreamBuffer()
-  const target = messageId
-    ? messages.value.find((message) => message.id === messageId)
+
+  const target = targetId
+    ? messages.value.find((message) => message.id === targetId)
     : messages.value[messages.value.length - 1]
+
   if (target && target.senderType === 2) {
-    target.content = errorMsg
-    target.isError = true
+    if (target.content) {
+      // 有正文：只附加一条错误状态，正文继续正常渲染
+      target.error = errorMsg || '生成中断，请重试'
+    } else {
+      // 一个字都没收到：退回原来的错误气泡
+      target.content = errorMsg
+      target.isError = true
+    }
   }
   isAiTyping.value = false
   ElMessage.error(errorMsg || '心理健康AI助手回复失败，请稍后再试...')
+}
+
+// 重试复用原气泡：msg 来自 v-for，已经是响应式代理，这里直接改能正常触发更新
+const retryMessage = (msg) => {
+  if (!msg?.retryWith || isAiTyping.value) return
+  const { sessionId, userMessage: retryText } = msg.retryWith
+
+  msg.content = ''
+  msg.error = ''
+  msg.stopped = false
+  msg.isError = false
+
+  startAiResponse(sessionId, retryText, msg)
 }
 
 const fillSuggestion = async (suggestion) => {
@@ -823,6 +969,8 @@ watch(
 onBeforeUnmount(() => {
   stopTypewriter()
   discardStreamBuffer()
+  streamResizeObserver?.disconnect()
+  streamResizeObserver = null
   if (scrollRafId) {
     cancelAnimationFrame(scrollRafId)
     scrollRafId = null
@@ -831,6 +979,7 @@ onBeforeUnmount(() => {
     activeStreamController.abort()
     activeStreamController = null
   }
+  activeMessageId = null
   isAiTyping.value = false
   document.body.classList.remove('fe-noscroll')
 })
@@ -840,6 +989,7 @@ onMounted(() => {
   createNewFrontendSession()
   getSessionPage()
   startTypewriter()
+  setupStreamObserver()
 })
 </script>
 
@@ -1452,6 +1602,41 @@ onMounted(() => {
   scrollbar-color: var(--fe-border-strong) transparent;
 }
 
+/* 用户上翻阅读时贴在可视区底部，不跟着内容滚走（sticky 而非 absolute） */
+.jump-latest {
+  position: sticky;
+  bottom: 8px;
+  z-index: 3;
+  display: flex;
+  align-items: center;
+  width: fit-content;
+  min-height: 36px;
+  margin: 12px auto 0;
+  padding: 0 16px;
+  border: 1px solid var(--fe-border);
+  border-radius: var(--fe-radius-pill);
+  background: var(--fe-surface);
+  box-shadow: var(--fe-shadow-md);
+  color: var(--fe-text-soft);
+  font: inherit;
+  font-size: 12.5px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    color 0.2s ease,
+    border-color 0.2s ease;
+
+  &:hover {
+    border-color: var(--fe-brand);
+    color: var(--fe-brand-deep);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--fe-brand-ring);
+  }
+}
+
 .chat-stream {
   width: 100%;
   max-width: 820px;
@@ -1625,6 +1810,45 @@ onMounted(() => {
   white-space: pre-wrap;
 }
 
+/* 气泡下方的附加状态：已停止 / 生成失败 + 重试入口 */
+.stream-status {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--fe-text-muted);
+  font-size: 12px;
+  line-height: 1.5;
+
+  &.is-error {
+    color: var(--fe-danger);
+  }
+}
+
+.retry-btn {
+  min-height: 28px;
+  padding: 0 12px;
+  border: 1px solid currentColor;
+  border-radius: var(--fe-radius-pill);
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  cursor: pointer;
+  transition:
+    background-color 0.2s ease,
+    color 0.2s ease;
+
+  &:hover {
+    background: var(--fe-danger-soft);
+  }
+
+  &:focus-visible {
+    outline: none;
+    box-shadow: 0 0 0 3px var(--fe-danger-ring);
+  }
+}
+
 .error-bubble {
   border-color: var(--fe-danger-ring);
   background: var(--fe-danger-soft);
@@ -1778,6 +2002,29 @@ onMounted(() => {
       box-shadow:
         0 0 0 3px var(--fe-brand-ring),
         var(--fe-shadow-brand);
+    }
+  }
+
+  /* 生成中切换为停止：中性深色，避免与“发送”的品牌绿混淆 */
+  &.is-stop {
+    background: var(--fe-text-soft);
+    box-shadow: none;
+    color: var(--fe-surface);
+    cursor: pointer;
+
+    svg {
+      /* 基础规则里有 fill: none，这里必须覆盖，否则方块只剩描边 */
+      fill: currentColor;
+      stroke: none;
+    }
+
+    &:hover {
+      transform: scale(1.04);
+    }
+
+    &:focus-visible {
+      outline: none;
+      box-shadow: 0 0 0 3px var(--fe-brand-ring);
     }
   }
 }
