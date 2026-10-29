@@ -275,7 +275,6 @@ import { computed, nextTick, onBeforeUnmount, onMounted, ref, watch } from 'vue'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus/es/components/message/index.mjs'
 import { ElMessageBox } from 'element-plus/es/components/message-box/index.mjs'
-import { fetchEventSource } from '@microsoft/fetch-event-source'
 import MarkdownRenderer from './MarkdownRenderer.vue'
 import {
   startSessionAPI,
@@ -284,8 +283,8 @@ import {
   getSessionEmotionAPI,
   deleteSessionAPI
 } from '@/api/chat'
-import { apiBaseUrl } from '@/config'
 import { useAuthStore } from '@/store/auth'
+import { useChatStream } from '@/composables/useChatStream'
 
 const router = useRouter()
 const authStore = useAuthStore()
@@ -299,7 +298,9 @@ const currentSession = ref(null)
 const sessionList = ref([])
 const messages = ref([])
 const userMessage = ref('')
-const isAiTyping = ref(false)
+// 连接状态、增量聚合、停止与失败全部交给组合式函数，组件只看“是否正在生成”
+const chat = useChatStream()
+const isAiTyping = computed(() => chat.isActive.value)
 const chatMessagesRef = ref(null)
 const inputRef = ref(null)
 const sidebarCollapsed = ref(window.matchMedia('(max-width: 900px)').matches)
@@ -441,65 +442,25 @@ const currentEmotion = ref({
   improvementSuggestions: []
 })
 
-let activeStreamController = null
 // 当前正在生成的 AI 消息 id：停止、重试都要靠它定位气泡
 let activeMessageId = null
 
-// 流式内容逐片更新会引发频繁布局，按 80ms 合并刷新。
-const STREAM_FLUSH_INTERVAL = 80
-let streamBuffer = ''
-let streamFlushTimer = null
-
-const flushStreamBuffer = (messageId) => {
-  if (streamFlushTimer) {
-    clearTimeout(streamFlushTimer)
-    streamFlushTimer = null
-  }
-  if (!streamBuffer) return
-  const targetMsg = messages.value.find((message) => message.id === messageId)
-  const pending = streamBuffer
-  streamBuffer = ''
-  if (!targetMsg) return
-  targetMsg.content += pending
-  scrollToBottom()
-}
-
-const discardStreamBuffer = () => {
-  streamBuffer = ''
-  if (streamFlushTimer) {
-    clearTimeout(streamFlushTimer)
-    streamFlushTimer = null
-  }
-}
-
-// 旧流继续写入会污染新会话，因此切换会话前统一中止并清空缓冲。
+// 旧流继续写入会污染新会话，因此切换会话前统一中止并清空增量。
 const stopActiveStream = () => {
-  if (activeStreamController) {
-    activeStreamController.abort()
-    activeStreamController = null
-  }
-  discardStreamBuffer()
+  chat.abort()
   activeMessageId = null
-  isAiTyping.value = false
 }
 
-// 用户主动停止：先保住缓冲里最后一片，再中断连接。
-// 顺序不能反——abort 之后 onerror 走 AbortError 分支，内容不再追加。
+// 用户主动停止：组合式函数负责保住已收到的增量，这里只做消息收尾。
 // 注意：这里只中断前端接收，后端可能仍在生成；再次进入会话以服务端历史为准。
 const stopGeneration = () => {
-  if (!isAiTyping.value) return
-
   const messageId = activeMessageId
-  if (messageId) flushStreamBuffer(messageId)
-
-  activeStreamController?.abort()
-  activeStreamController = null
+  if (!chat.stop()) return
   activeMessageId = null
 
   const target = messages.value.find((message) => message.id === messageId)
   if (target) target.stopped = true
 
-  isAiTyping.value = false
   if (currentSession.value?.sessionId) {
     loadSessionEmotion(currentSession.value.sessionId)
   }
@@ -791,7 +752,6 @@ const startAiResponse = async (sessionId, msg, reuseMessage = null) => {
     ElMessage.error('心理健康AI助手正在输入中，请稍后再试...')
     return
   }
-  isAiTyping.value = true
 
   // 重试时复用原气泡：不新增消息，避免列表里出现两条重复回复
   const messageId = reuseMessage
@@ -813,93 +773,31 @@ const startAiResponse = async (sessionId, msg, reuseMessage = null) => {
   }
   scrollToBottom({ force: true })
 
-  const ctrl = new AbortController()
-  activeStreamController = ctrl
-
-  fetchEventSource(`${apiBaseUrl}/psychological-chat/stream`, {
-    method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'Token': localStorage.getItem('token'),
-      'Accept': 'text/event-stream'
+  chat.start({
+    sessionId,
+    userMessage: msg,
+    token: localStorage.getItem('token'),
+    // 回调给的是“累计全文”，直接覆盖；用 id 查表才能拿到响应式代理
+    onUpdate: (text) => {
+      const target = messages.value.find((message) => message.id === messageId)
+      if (!target) return
+      target.content = text
+      scrollToBottom()
     },
-    body: JSON.stringify({
-      sessionId,
-      userMessage: msg
-    }),
-    signal: ctrl.signal,
-    onopen: (response) => {
-      if (response.status === 401 || response.status === 403) {
-        discardStreamBuffer()
-        handleUnauthorized(messageId)
-        ctrl.abort()
-        return
-      }
-      const contentType = response.headers.get('Content-Type') || ''
-      if (!response.ok || !contentType.includes('text/event-stream')) {
-        discardStreamBuffer()
-        handleError('服务器响应异常，请稍后重试', messageId)
-        ctrl.abort()
-      }
+    onDone: () => {
+      if (activeMessageId === messageId) activeMessageId = null
+      loadSessionEmotion(sessionId)
     },
-    onmessage: (event) => {
-      const res = event.data.trim()
-      if (!res) return
-
-      if (event.event === 'done') {
-        flushStreamBuffer(messageId)
-        if (activeStreamController === ctrl) {
-          isAiTyping.value = false
-        }
-        ctrl.abort()
-        loadSessionEmotion(sessionId)
-        return
-      }
-
-      try {
-        const payload = JSON.parse(res)
-        const ok = String(payload.code) === '200'
-        if (ok && payload.data && payload.data.content) {
-          streamBuffer += payload.data.content
-          if (!streamFlushTimer) {
-            streamFlushTimer = setTimeout(() => flushStreamBuffer(messageId), STREAM_FLUSH_INTERVAL)
-          }
-        } else {
-          discardStreamBuffer()
-          handleError(payload.message || 'AI回复失败', messageId)
-        }
-      } catch (error) {
-        console.error('解析流式数据异常:', error)
-      }
+    onError: (errorMsg) => {
+      handleError(errorMsg, messageId)
     },
-    onerror: (err) => {
-      if (err?.name === 'AbortError') return
-      console.error('SSE 连接异常:', err)
-      discardStreamBuffer()
-      handleError('网络连接中断或AI回复失败', messageId)
-      ctrl.abort()
-      throw err
-    },
-    onclose: () => {
-      flushStreamBuffer(messageId)
-      if (activeStreamController === ctrl) {
-        isAiTyping.value = false
-      }
+    onUnauthorized: () => {
+      handleUnauthorized(messageId)
     }
-  }).catch(() => {
-    // 中止与错误已由统一回调处理，这里只消费 Promise rejection。
-  }).finally(() => {
-    flushStreamBuffer(messageId)
-    if (activeStreamController === ctrl) {
-      activeStreamController = null
-      isAiTyping.value = false
-    }
-    if (activeMessageId === messageId) activeMessageId = null
   })
 }
 
 const handleUnauthorized = (messageId = null) => {
-  discardStreamBuffer()
   authStore.logout()
   activeMessageId = null
   const target = messageId ? messages.value.find((message) => message.id === messageId) : null
@@ -907,17 +805,13 @@ const handleUnauthorized = (messageId = null) => {
     target.content = '登录已过期，请重新登录'
     target.isError = true
   }
-  isAiTyping.value = false
   ElMessage.error('登录已过期，请重新登录')
   router.push('/auth/login')
 }
 
 const handleError = (errorMsg, messageId = null) => {
-  // 先落盘再丢弃：已收到的增量必须写进气泡，不能因为报错把正文冲掉
+  // 已收到的增量在 useChatStream 失败时已落盘，这里只决定“正文 + 状态”怎么呈现
   const targetId = messageId || activeMessageId
-  if (targetId) flushStreamBuffer(targetId)
-  discardStreamBuffer()
-
   const target = targetId
     ? messages.value.find((message) => message.id === targetId)
     : messages.value[messages.value.length - 1]
@@ -932,7 +826,6 @@ const handleError = (errorMsg, messageId = null) => {
       target.isError = true
     }
   }
-  isAiTyping.value = false
   ElMessage.error(errorMsg || '心理健康AI助手回复失败，请稍后再试...')
 }
 
@@ -968,19 +861,13 @@ watch(
 
 onBeforeUnmount(() => {
   stopTypewriter()
-  discardStreamBuffer()
+  stopActiveStream()
   streamResizeObserver?.disconnect()
   streamResizeObserver = null
   if (scrollRafId) {
     cancelAnimationFrame(scrollRafId)
     scrollRafId = null
   }
-  if (activeStreamController) {
-    activeStreamController.abort()
-    activeStreamController = null
-  }
-  activeMessageId = null
-  isAiTyping.value = false
   document.body.classList.remove('fe-noscroll')
 })
 
